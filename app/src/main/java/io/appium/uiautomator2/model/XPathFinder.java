@@ -125,18 +125,32 @@ public class XPathFinder implements Finder {
         element.setAttribute(attr.getName(), String.valueOf(value));
     }
 
+//    /**
+//     * @param clsName the original class name
+//     * @return The tag name used to build UiElement DOM. It is preferable to use
+//     * this to build XPath instead of String literals.
+//     */
+//    private static String tag(String clsName) {
+//        // the nth anonymous class has a class name ending in "Outer$n"
+//        // and local inner classes have names ending in "Outer.$1Inner"
+//        return clsName
+//                .replaceAll("\\?+", "_")
+//                .replaceAll("\\$[0-9]+", "\\$");
+//    }
+/////////////////////////////////// ADDED BY MO: tag cleanup(raise DOM Parser Exception) ///////////////////////////////////////////////////
     /**
      * @param clsName the original class name
      * @return The tag name used to build UiElement DOM. It is preferable to use
      * this to build XPath instead of String literals.
      */
-    private static String tag(String clsName) {
-        // the nth anonymous class has a class name ending in "Outer$n"
-        // and local inner classes have names ending in "Outer.$1Inner"
-        return clsName
-                .replaceAll("\\?+", "_")
-                .replaceAll("\\$[0-9]+", "\\$");
+    public static String tag(String clsName) {
+        String cname = clsName.replaceAll("[^a-zA-Z.]","_");
+        if (cname.length() == 0) {
+            cname = "apptestai.widget.UnkownView";
+        }
+        return cname;
     }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     /**
      * returns by excluding inner class name.

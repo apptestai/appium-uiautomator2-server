@@ -58,7 +58,15 @@ public class UiObject2Element implements AndroidElement {
     }
 
     private static boolean isToastElement(AccessibilityNodeInfo nodeInfo) {
-        return nodeInfo.getClassName().toString().equals(Toast.class.getName());
+//        return nodeInfo.getClassName().toString().equals(Toast.class.getName());
+        /////////////////////////////////// ADDED BY MO: handle null point exception ////////////////////////////////
+        try{
+            return  nodeInfo.getClassName().toString().equals(Toast.class.getName());
+        }catch (Exception e) {
+            Logger.error(e);
+            return false;
+        }
+        //////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
     public void click() {

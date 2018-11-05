@@ -31,7 +31,10 @@ import io.appium.uiautomator2.model.UiAutomationElement;
 import io.appium.uiautomator2.model.internal.CustomUiDevice;
 
 public class AXWindowHelpers {
-    public static final long AX_ROOT_RETRIEVAL_TIMEOUT = 10000;
+    //    public static final long AX_ROOT_RETRIEVAL_TIMEOUT = 10000;
+/////////////////////////////////// ADDED BY MO: change default timeout(10sec -> 3sec)  ///////////////////////////////////////////////////
+    public static final long AX_ROOT_RETRIEVAL_TIMEOUT = 3000;
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private static final boolean MULTI_WINDOW = false;
     private static AccessibilityNodeInfo currentActiveWindowRoot = null;
 

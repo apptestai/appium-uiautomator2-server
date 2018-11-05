@@ -44,7 +44,8 @@ public class Click extends SafeRequestHandler {
             final boolean res = getUiDevice().click(coords.x.intValue(), coords.y.intValue());
             return new AppiumResponse(getSessionId(request), res);
         }
-        Device.waitForIdle();
+//        Device.waitForIdle();
+        /////////////////////////////////// MODIFIED BY MO: responsibility of client ///////////////////////////////////////////////////
         return new AppiumResponse(getSessionId(request), true);
     }
 }

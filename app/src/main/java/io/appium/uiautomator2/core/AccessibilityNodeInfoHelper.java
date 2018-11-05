@@ -17,6 +17,7 @@ package io.appium.uiautomator2.core;
 
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 
@@ -84,4 +85,63 @@ public class AccessibilityNodeInfoHelper {
         }
         return text;
     }
+
+
+    /////////////////////////////////// ADDED BY MO: additional attributes ///////////////////////////////////////////////////
+    enum NodeInputType {
+        NULL,
+        DATETIME,
+        NUMBER,
+        PHONE,
+        POSTAL_ADDRESS,
+        PERSON_NAME,
+        EMAIL_ADDRESS,
+        TEXT
+    }
+
+    private static boolean _hasType(int atype, int btype) {
+        return ((atype & btype) == btype);
+    }
+
+    static String  getNodeInputType(AccessibilityNodeInfo node) {
+        int inputType = node.getInputType();
+        // unknown
+        if (inputType == InputType.TYPE_NULL) {
+            return NodeInputType.NULL.name();
+        }
+
+        // phone
+        if (_hasType(inputType, InputType.TYPE_CLASS_PHONE)) {
+            return NodeInputType.PHONE.name();
+        }
+
+        // POSTAL_ADDRESS
+        if (_hasType(inputType, InputType.TYPE_TEXT_VARIATION_POSTAL_ADDRESS)) {
+            return NodeInputType.POSTAL_ADDRESS.name();
+        }
+
+        // PERSON_NAME
+        if (_hasType(inputType, InputType.TYPE_TEXT_VARIATION_PERSON_NAME)) {
+            return NodeInputType.PERSON_NAME.name();
+        }
+
+        // EMAIL_ADDRESS
+        if (_hasType(inputType, InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+                || _hasType(inputType, InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS)) {
+            return NodeInputType.EMAIL_ADDRESS.name();
+        }
+
+        // datetime
+        if (_hasType(inputType, InputType.TYPE_CLASS_DATETIME)) {
+            return NodeInputType.DATETIME.name();
+        }
+
+        // number
+        if (_hasType(inputType, InputType.TYPE_CLASS_NUMBER)) {
+            return NodeInputType.NUMBER.name();
+        }
+
+        return NodeInputType.TEXT.name();
+    }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

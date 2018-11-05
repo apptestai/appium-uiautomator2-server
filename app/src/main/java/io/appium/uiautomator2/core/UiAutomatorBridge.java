@@ -15,7 +15,9 @@
  */
 package io.appium.uiautomator2.core;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
+import android.support.test.uiautomator.Configurator;
 import android.support.test.uiautomator.UiDevice;
 import android.view.Display;
 import android.view.InputEvent;
@@ -54,6 +56,14 @@ public class UiAutomatorBridge {
             Logger.error("ERROR", error);
             throw new Error(error);
         }
+
+        /////////////////////////////////// ADDED BY MO: setting global WaitForIdleTimeout ///////////////////////////////////////////////////
+        try {
+            this.configureAccessibilityService();
+        } catch (Exception e) {
+            Logger.info("ERROR", e);
+        }
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
     public static UiAutomatorBridge getInstance() {
@@ -79,4 +89,17 @@ public class UiAutomatorBridge {
     public boolean injectInputEvent(InputEvent event, boolean sync) throws UiAutomator2Exception {
         return (Boolean) invoke(method(CLASS_UI_AUTOMATOR_BRIDGE, METHOD_INJECT_INPUT_EVENT, InputEvent.class, boolean.class), uiAutomatorBridge, event, sync);
     }
+
+    /////////////////////////////////// ADDED BY MO: setting global WaitForIdleTimeout ///////////////////////////////////////////////////
+    private void configureAccessibilityService() {
+        // setting global WaitForIdleTimeout
+        Configurator configurator = Configurator.getInstance();
+        configurator.setWaitForIdleTimeout(Device.TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
+
+        UiAutomation uiAutomation = this.getUiAutomation();
+        AccessibilityServiceInfo serviceInfo = uiAutomation.getServiceInfo();
+        serviceInfo.flags = serviceInfo.flags | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS | AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+        uiAutomation.setServiceInfo(serviceInfo);
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

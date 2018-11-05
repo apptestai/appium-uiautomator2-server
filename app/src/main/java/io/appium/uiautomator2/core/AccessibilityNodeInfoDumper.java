@@ -16,6 +16,7 @@
 package io.appium.uiautomator2.core;
 
 import android.graphics.Point;
+import android.os.Build;
 import android.os.SystemClock;
 import android.util.Xml;
 import android.view.Display;
@@ -88,7 +89,7 @@ public class AccessibilityNodeInfoDumper {
         Logger.info("Fetch time: " + (endTime - startTime) + "ms");
         return xmlDump.toString();
     }
-    
+
     private static void dumpNodeRec(AccessibilityNodeInfo node, XmlSerializer serializer,
                                     int index, int width, int height, final int depth)
             throws IOException {
@@ -105,12 +106,37 @@ public class AccessibilityNodeInfoDumper {
         if (!isOfNafExcludedClass(node) && !isAccessibilityFriendly(node))
             serializer.attribute("", "NAF", Boolean.toString(true));
         serializer.attribute("", "index", Integer.toString(index));
-        final String text;
-        if (node.getRangeInfo() == null) {
-            text = safeCharSeqToString(node.getText());
-        } else {
-            text = Float.toString(node.getRangeInfo().getCurrent());
+//        final String text;
+//        if (node.getRangeInfo() == null) {
+//            text = safeCharSeqToString(node.getText());
+//        } else {
+//            text = Float.toString(node.getRangeInfo().getCurrent());
+//        }
+        /////////////////////////////////// ADDED BY MO: Illegal character (d83d) ///////////////////////////////////////////////////
+        // java.lang.IllegalArgumentException: Illegal character (d83d)
+        String text;
+        try {
+            if (node.getRangeInfo() == null) {
+                text = safeCharSeqToString(node.getText());
+            } else {
+                text = Float.toString(node.getRangeInfo().getCurrent());
+            }
+        } catch (Exception e) {
+            Logger.error("XmlSerializer: ", e);
+            text = "";
         }
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        /////////////////////////////////// ADDED BY MO: additional attributes ///////////////////////////////////////////////////
+        // >= API_19
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            serializer.attribute("", "input-type", AccessibilityNodeInfoHelper.getNodeInputType(node));
+        } else {
+            serializer.attribute("", "input-type", AccessibilityNodeInfoHelper.NodeInputType.NULL.name());
+        }
+        serializer.attribute("", "hashcode", Integer.toString(node.hashCode()));
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         serializer.attribute("", "text", text);
         serializer.attribute("", "class", safeCharSeqToString(node.getClassName()));
         serializer.attribute("", "package", safeCharSeqToString(node.getPackageName()));

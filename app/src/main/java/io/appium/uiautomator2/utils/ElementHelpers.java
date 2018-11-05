@@ -21,6 +21,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.test.uiautomator.BySelector;
 import android.support.test.uiautomator.UiObject;
+import android.support.test.uiautomator.UiObject2;
 import android.support.test.uiautomator.UiObjectNotFoundException;
 import android.view.accessibility.AccessibilityNodeInfo;
 
@@ -183,11 +184,35 @@ public abstract class ElementHelpers {
             Logger.debug("Encoded text: " + textToSend);
         }
 
+        /////////////////////////////////// ADDED BY MO: set text using IME ///////////////////////////////////////////////////
+        // java.lang.NullPointerException on UiObject2.setText(): API Level <= 19
+        UnicodeIME ime = UnicodeIME.getCurrentUnicodeIME();
+        if (ime != null) {
+            try {
+                Logger.debug("Sending text to ime" + textToSend);
+                boolean success = ime.commitString(textToSend);
+                if (success) {
+                    return true;
+                }
+                Logger.debug("Fail to set text using ime");
+            } catch (Exception ige) {
+                Logger.error(ige);
+            }
+
+        }
+//        if (Build.VERSION.SDK_INT < 24 && Build.VERSION.SDK_INT >= 21) {
+//            textToSend = textToSend.replaceAll(REG_SP_CHAR_EXPR, "");
+//        }
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Logger.debug("Sending text to element: " + textToSend);
         Bundle args = new Bundle();
         args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, textToSend);
         return nodeInfo.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args);
     }
+//    /////////////////////////////////// ADDED BY MO: special character ///////////////////////////////////////////////////
+//    private static final String REG_SP_CHAR_EXPR = "[\"#$%&'()*+-./:;<=>?\\^_{|}~`,.\\[\\]]*";
+//    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     public static AndroidElement findElement(final BySelector ui2BySelector)
             throws UiAutomator2Exception, ClassNotFoundException {

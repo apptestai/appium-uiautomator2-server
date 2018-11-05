@@ -36,6 +36,7 @@ import javax.xml.xpath.XPathFactory;
 
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
 import io.appium.uiautomator2.core.AccessibilityNodeInfoDumper;
+import io.appium.uiautomator2.model.XPathFinder;
 
 import static io.appium.uiautomator2.utils.AXWindowHelpers.currentActiveWindowRoot;
 import static io.appium.uiautomator2.utils.AXWindowHelpers.refreshRootAXNode;
@@ -137,6 +138,11 @@ public abstract class XMLHierarchy {
                 .replace("?", "")
                 .replaceAll("\\.+", ".")
                 .replaceAll("(^\\.|\\.$)", "");
+
+        /////////////////////////////////// ADDED BY MO: cleanup tagname ///////////////////////////////////
+        fixedName = XPathFinder.tag(fixedName);
+        ///////////////////////////////////////////////////////////////////////////////////////////////////
+
         if (!fixedName.equals(name)) {
             Logger.info(String.format("Rewrote XML tag name '%s' to '%s'", name, fixedName));
         }

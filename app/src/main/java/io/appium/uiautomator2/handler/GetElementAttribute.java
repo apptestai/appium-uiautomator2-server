@@ -14,6 +14,8 @@ import java.io.InvalidClassException;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 import io.appium.uiautomator2.common.exceptions.NoAttributeFoundException;
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
@@ -50,15 +52,41 @@ public class GetElementAttribute extends SafeRequestHandler {
         super(mappedUri);
     }
 
+    //    public static String getElementAttributeValue(AndroidElement element, String attributeName) throws NoAttributeFoundException, UiObjectNotFoundException, ReflectiveOperationException {
+//        if (Arrays.asList("name", "contentDescription", "text", "className", "resourceId").contains(attributeName)) {
+//            return element.getStringAttribute(attributeName);
+//        } else if ("contentSize".equals(attributeName)) {
+//            Rect boundsRect = element.getBounds();
+//            ContentSize contentSize = new ContentSize(boundsRect);
+//            contentSize.touchPadding = getTouchPadding(element);
+//            contentSize.scrollableOffset = getScrollableOffset(element);
+//            return contentSize.toString();
+//        } else {
+//            Boolean boolAttribute = element.getBoolAttribute(attributeName);
+//            // The result should be of type string according to
+//            // https://w3c.github.io/webdriver/webdriver-spec.html#get-element-attribute
+//            return boolAttribute.toString();
+//        }
+//    }
+/////////////////////////////////// ADDED BY MO: override add bounds attribute ///////////////////////////////////////////////////
+    private static final Set<String> STR_ATTRIBUTES = new HashSet<>(Arrays.asList("name", "contentDescription", "text", "className", "resourceId"));
+    private static final String CONTENT_SIZE_ATTRIBUTE = "contentSize";
+    private static final String BOUNDS_ATTRIBUTE = "bounds";
     public static String getElementAttributeValue(AndroidElement element, String attributeName) throws NoAttributeFoundException, UiObjectNotFoundException, ReflectiveOperationException {
-        if (Arrays.asList("name", "contentDescription", "text", "className", "resourceId").contains(attributeName)) {
+        if (STR_ATTRIBUTES.contains(attributeName)) {
             return element.getStringAttribute(attributeName);
-        } else if ("contentSize".equals(attributeName)) {
+
+        } else if (CONTENT_SIZE_ATTRIBUTE.equals(attributeName)) {
             Rect boundsRect = element.getBounds();
             ContentSize contentSize = new ContentSize(boundsRect);
             contentSize.touchPadding = getTouchPadding(element);
             contentSize.scrollableOffset = getScrollableOffset(element);
             return contentSize.toString();
+
+        } else if (BOUNDS_ATTRIBUTE.equals(attributeName)) {
+            Rect boundsRect = getElementBoundsInScreen(element);
+            return boundsRect.toShortString();
+
         } else {
             Boolean boolAttribute = element.getBoolAttribute(attributeName);
             // The result should be of type string according to
@@ -66,6 +94,7 @@ public class GetElementAttribute extends SafeRequestHandler {
             return boolAttribute.toString();
         }
     }
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private static int getScrollableOffset(AndroidElement uiScrollable) {
         // get the bounds of the scrollable view
