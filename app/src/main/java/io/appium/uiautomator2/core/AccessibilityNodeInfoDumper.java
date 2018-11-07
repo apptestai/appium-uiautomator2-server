@@ -72,7 +72,10 @@ public class AccessibilityNodeInfoDumper {
                 final int height = size.y;
 
                 serializer.attribute("", "rotation", Integer.toString(display.getRotation()));
-
+                /////////////////////////////////// ADDED BY MO: additional attrs(screen bounds) ///////////////////////////////////////////////////
+                serializer.attribute("", "width", Integer.toString(width));
+                serializer.attribute("", "height", Integer.toString(height));
+                ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
                 dumpNodeRec(root, serializer, 0, width, height, 0);
             }
 
