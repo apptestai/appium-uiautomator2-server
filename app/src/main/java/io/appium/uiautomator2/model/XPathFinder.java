@@ -98,6 +98,9 @@ public class XPathFinder implements Finder {
         setAttribute(element, Attribute.SCROLLABLE, uiElement.isScrollable());
         setAttribute(element, Attribute.LONG_CLICKABLE, uiElement.isLongClickable());
         setAttribute(element, Attribute.PASSWORD, uiElement.isPassword());
+        /////////////////////////////////// ADDED BY MO: add hashcode attribute ///////////////////////////////////////////////////
+        setAttribute(element, Attribute.HASHCODE, (String)uiElement.get(Attribute.HASHCODE));
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         if (uiElement.hasSelection()) {
             element.setAttribute(Attribute.SELECTION_START.getName(),
                     Integer.toString(uiElement.getSelectionStart()));

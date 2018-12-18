@@ -84,6 +84,9 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
         }
         put(attribs, Attribute.SELECTED, node.isSelected());
         put(attribs, Attribute.BOUNDS, getBounds(node));
+        /////////////////////////////////// ADDED BY MO: add hashcode attribute ///////////////////////////////////////////////////
+        put(attribs, Attribute.HASHCODE, Integer.toString(node.hashCode()));
+        ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         attributes = Collections.unmodifiableMap(attribs);
 
         // Order matters as getVisibleBounds depends on visible
