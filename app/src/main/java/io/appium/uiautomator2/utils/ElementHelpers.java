@@ -19,14 +19,6 @@ package io.appium.uiautomator2.utils;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
-import android.support.test.uiautomator.By;
-import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.util.Range;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
 
@@ -42,6 +34,13 @@ import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+import androidx.test.uiautomator.By;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.UiObjectNotFoundException;
 import io.appium.uiautomator2.common.exceptions.ElementNotFoundException;
 import io.appium.uiautomator2.common.exceptions.NoAttributeFoundException;
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
@@ -53,7 +52,7 @@ import io.appium.uiautomator2.core.UiObjectChildGenerator;
 import io.appium.uiautomator2.handler.GetRect;
 import io.appium.uiautomator2.model.AccessibilityScrollData;
 import io.appium.uiautomator2.model.AndroidElement;
-import io.appium.uiautomator2.model.AppiumUiAutomatorDriver;
+import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.model.Session;
 import io.appium.uiautomator2.model.UiObject2Element;
 
@@ -64,8 +63,8 @@ import static io.appium.uiautomator2.utils.JSONUtils.formatNull;
 import static io.appium.uiautomator2.utils.ReflectionUtils.getField;
 import static io.appium.uiautomator2.utils.ReflectionUtils.method;
 import static io.appium.uiautomator2.utils.StringHelpers.charSequenceToString;
-import static io.appium.uiautomator2.utils.StringHelpers.toNullableString;
 import static io.appium.uiautomator2.utils.StringHelpers.toNonNullString;
+import static io.appium.uiautomator2.utils.StringHelpers.toNullableString;
 
 public abstract class ElementHelpers {
 
@@ -124,10 +123,11 @@ public abstract class ElementHelpers {
     public static JSONObject toJSON(AndroidElement el) throws JSONException, UiObjectNotFoundException {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("ELEMENT", el.getId());
-        if (Session.shouldUseCompactResponses()) {
+        Session session = AppiumUIA2Driver.getInstance().getSessionOrThrow();
+        if (session.shouldUseCompactResponses()) {
             return jsonObject;
         }
-        for (String field : Session.getElementResponseAttributes()) {
+        for (String field : session.getElementResponseAttributes()) {
             try {
                 if (Objects.equals(field, "name")) {
                     jsonObject.put(field, formatNull(el.getContentDesc()));
@@ -202,7 +202,7 @@ public abstract class ElementHelpers {
         if (ui2Object == null) {
             throw new ElementNotFoundException();
         }
-        return getAndroidElement(UUID.randomUUID().toString(), ui2Object, null);
+        return getAndroidElement(UUID.randomUUID().toString(), ui2Object, true);
     }
 
     public static NoAttributeFoundException generateNoAttributeException(@Nullable String attributeName) {
@@ -290,7 +290,7 @@ public abstract class ElementHelpers {
             y2 = yMargin;
         }
 
-        Session session = AppiumUiAutomatorDriver.getInstance().getSession();
+        Session session = AppiumUIA2Driver.getInstance().getSession();
         AccessibilityScrollData lastScrollData = null;
         Logger.debug("Doing a mini swipe-and-back in the scrollable view to generate scroll data");
         swipe(x1, y1, x2, y2);

@@ -1,17 +1,17 @@
 package io.appium.uiautomator2.handler;
 
-import android.support.test.uiautomator.UiObjectNotFoundException;
-
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import androidx.test.uiautomator.UiObjectNotFoundException;
 import io.appium.uiautomator2.core.EventRegister;
 import io.appium.uiautomator2.core.ReturningRunnable;
 import io.appium.uiautomator2.handler.request.SafeRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.model.AndroidElement;
-import io.appium.uiautomator2.model.KnownElements;
+import io.appium.uiautomator2.model.AppiumUIA2Driver;
+import io.appium.uiautomator2.model.Session;
 import io.appium.uiautomator2.server.WDStatus;
 import io.appium.uiautomator2.utils.Logger;
 import io.appium.uiautomator2.utils.Point;
@@ -76,7 +76,8 @@ public class Swipe extends SafeRequestHandler {
             if (payload.has("elementId")) {
                 Logger.info("Payload has elementId" + payload);
                 String id = payload.getString("elementId");
-                element = KnownElements.getElementFromCache(id);
+                Session session = AppiumUIA2Driver.getInstance().getSessionOrThrow();
+                element = session.getKnownElements().getElementFromCache(id);
             }
             start = new Point(payload.get("startX"), payload.get("startY"));
             end = new Point(payload.get("endX"), payload.get("endY"));

@@ -16,20 +16,19 @@
 
 package io.appium.uiautomator2.utils;
 
-import android.support.annotation.Nullable;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiSelector;
-
 import java.util.List;
 import java.util.regex.Pattern;
 
-import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
+import androidx.annotation.Nullable;
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiSelector;
 import io.appium.uiautomator2.common.exceptions.UiSelectorSyntaxException;
-import io.appium.uiautomator2.core.AccessibilityNodeInfoGetter;
+import io.appium.uiautomator2.core.AccessibilityNodeInfoDumper;
 import io.appium.uiautomator2.model.AndroidElement;
+import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.model.By;
-import io.appium.uiautomator2.model.Session;
-import io.appium.uiautomator2.model.XPathFinder;
+
+import static io.appium.uiautomator2.core.AccessibilityNodeInfoGetter.fromUiObject;
 
 public class ElementLocationHelpers {
     /**
@@ -58,21 +57,18 @@ public class ElementLocationHelpers {
             // transform "textToBeChanged" into:
             // com.example.android.testing.espresso.BasicSample:id/textToBeChanged
             // it's prefixed with the app package.
-            locator = Session.capabilities.get("appPackage") + ":id/" + by.getElementLocator();
+            locator = String.format("%s:id/%s", AppiumUIA2Driver
+                    .getInstance()
+                    .getSessionOrThrow()
+                    .getCapability("appPackage"), by.getElementLocator());
             Logger.debug("Updated findElement locator strategy: " + locator);
         }
         return locator;
     }
 
-    /**
-     * returns  UiObject2 for an xpath expression
-     * TODO: Need to handle contextId based finding
-     */
-    public static NodeInfoList getXPathNodeMatch(final String expression, @Nullable AndroidElement element)
-            throws UiAutomator2Exception {
-        return new XPathFinder(expression).find(element == null
-                ? null
-                : AccessibilityNodeInfoGetter.fromUiObject(element.getUiObject()));
+    public static NodeInfoList getXPathNodeMatch(final String expression, @Nullable AndroidElement element, boolean multiple) {
+        return new AccessibilityNodeInfoDumper(element == null ? null : fromUiObject(element.getUiObject()))
+                .findNodes(expression, multiple);
     }
 
     @Nullable

@@ -30,17 +30,19 @@ import io.appium.uiautomator2.model.settings.ShutdownOnPowerDisconnect;
 import io.appium.uiautomator2.utils.Logger;
 
 import static android.content.Intent.ACTION_POWER_DISCONNECTED;
-import static android.support.test.InstrumentationRegistry.getContext;
+import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static io.appium.uiautomator2.server.ServerConfig.getServerPort;
 import static io.appium.uiautomator2.utils.Device.getUiDevice;
 
 public class ServerInstrumentation {
     private static final int MIN_PORT = 1024;
     private static final int MAX_PORT = 65535;
+    private static final String WAKE_LOCK_TAG = "UiAutomator2:ScreenKeeper";
+    private static final long MAX_TEST_DURATION = 24 * 60 * 60 * 1000;
 
     private static ServerInstrumentation instance;
 
-    private final Context context;
+    private final PowerManager powerManager;
     private final int serverPort;
     private HttpdThread serverThread;
     private PowerManager.WakeLock wakeLock;
@@ -52,14 +54,41 @@ public class ServerInstrumentation {
                     "The port is out of valid range [%s;%s]: %s", MIN_PORT, MAX_PORT, serverPort));
         }
         this.serverPort = serverPort;
-        this.context = context;
+        this.powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
     }
 
     public static synchronized ServerInstrumentation getInstance() {
         if (instance == null) {
-            instance = new ServerInstrumentation(getContext(), getServerPort());
+            instance = new ServerInstrumentation(getApplicationContext(), getServerPort());
         }
         return instance;
+    }
+
+    private void releaseWakeLock() {
+        if (wakeLock == null) {
+            return;
+        }
+
+        try {
+            wakeLock.release();
+        } catch (Exception e) {/* ignore */}
+        wakeLock = null;
+    }
+
+    private void acquireWakeLock() {
+        releaseWakeLock();
+
+        // Get a wake lock to stop the cpu going to sleep
+        //noinspection deprecation
+        wakeLock = powerManager.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, WAKE_LOCK_TAG);
+        try {
+            wakeLock.acquire(MAX_TEST_DURATION);
+            getUiDevice().wakeUp();
+        } catch (SecurityException e) {
+            Logger.error("Security Exception", e);
+        } catch (RemoteException e) {
+            Logger.error("Remote Exception while waking up", e);
+        }
     }
 
     public boolean isServerStopped() {
@@ -72,14 +101,8 @@ public class ServerInstrumentation {
 
     public void stopServer() {
         try {
-            if (wakeLock != null) {
-                try {
-                    wakeLock.release();
-                } catch (Exception e) {/* ignore */}
-                wakeLock = null;
-            }
+            releaseWakeLock();
             stopServerThread();
-
         } finally {
             instance = null;
         }
@@ -182,17 +205,7 @@ public class ServerInstrumentation {
         }
 
         private void startServer() {
-            // Get a wake lock to stop the cpu going to sleep
-            PowerManager pm = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
-            wakeLock = pm.newWakeLock(PowerManager.SCREEN_DIM_WAKE_LOCK, "UiAutomator2");
-            try {
-                wakeLock.acquire();
-                getUiDevice().wakeUp();
-            } catch (SecurityException e) {
-                Logger.error("Security Exception", e);
-            } catch (RemoteException e) {
-                Logger.error("Remote Exception while waking up", e);
-            }
+            acquireWakeLock();
 
             server.start();
 

@@ -14,14 +14,24 @@
  * limitations under the License.
  */
 
-package io.appium.uiautomator2.utils;
+package io.appium.uiautomator2.model.settings;
 
-import android.view.InputEvent;
+public class TrackScrollEvents extends AbstractSetting<Boolean> {
+    private static final String SETTING_NAME = "trackScrollEvents";
 
-import io.appium.uiautomator2.core.UiAutomatorBridge;
+    private boolean value = true;
 
-public class InteractionUtils {
-    public static boolean injectEventSync(InputEvent event) {
-        return UiAutomatorBridge.getInstance().injectInputEvent(event, true);
+    public TrackScrollEvents() {
+        super(Boolean.class, SETTING_NAME);
+    }
+
+    @Override
+    public Boolean getValue() {
+        return value;
+    }
+
+    @Override
+    protected void apply(Boolean value) {
+        this.value = value;
     }
 }

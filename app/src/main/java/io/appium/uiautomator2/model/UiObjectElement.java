@@ -17,15 +17,18 @@
 package io.appium.uiautomator2.model;
 
 import android.graphics.Rect;
-import android.support.annotation.Nullable;
-import android.support.test.uiautomator.BySelector;
-import android.support.test.uiautomator.Configurator;
-import android.support.test.uiautomator.UiObject;
-import android.support.test.uiautomator.UiObject2;
-import android.support.test.uiautomator.UiObjectNotFoundException;
-import android.support.test.uiautomator.UiSelector;
 import android.util.Range;
 import android.view.accessibility.AccessibilityNodeInfo;
+
+import androidx.annotation.Nullable;
+import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.Configurator;
+import androidx.test.uiautomator.UiObject;
+import androidx.test.uiautomator.UiObject2;
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiSelector;
+
+import org.apache.commons.lang.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,11 +57,16 @@ public class UiObjectElement implements AndroidElement {
     private final UiObject element;
     private final String id;
     private final By by;
+    private final String contextId;
+    private final boolean isSingleMatch;
 
-    public UiObjectElement(String id, UiObject element, By by) {
+    public UiObjectElement(String id, UiObject element, boolean isSingleMatch, By by,
+                           @Nullable String contextId) {
         this.id = id;
         this.element = element;
         this.by = by;
+        this.contextId = contextId;
+        this.isSingleMatch = isSingleMatch;
     }
 
     @Override
@@ -170,6 +178,16 @@ public class UiObjectElement implements AndroidElement {
     @Override
     public By getBy() {
         return by;
+    }
+
+    @Override
+    public String getContextId() {
+        return StringUtils.isBlank(contextId) ? null : contextId;
+    }
+
+    @Override
+    public boolean isSingleMatch() {
+        return isSingleMatch;
     }
 
     @Override

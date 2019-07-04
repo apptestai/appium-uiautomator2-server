@@ -16,9 +16,6 @@
 package io.appium.uiautomator2.unittest.test.internal;
 
 import android.content.Context;
-import android.support.test.InstrumentationRegistry;
-import android.support.test.runner.AndroidJUnit4;
-import android.support.test.uiautomator.Configurator;
 
 import org.json.JSONException;
 import org.junit.AfterClass;
@@ -31,19 +28,21 @@ import org.junit.runners.MethodSorters;
 
 import java.io.IOException;
 
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.runner.AndroidJUnit4;
+import androidx.test.uiautomator.Configurator;
 import io.appium.uiautomator2.model.By;
-import io.appium.uiautomator2.model.settings.Settings;
 import io.appium.uiautomator2.server.ServerInstrumentation;
 import io.appium.uiautomator2.unittest.test.Config;
 
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
-import static android.support.test.InstrumentationRegistry.getTargetContext;
+import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
 import static io.appium.uiautomator2.unittest.test.internal.TestUtils.waitForElement;
 import static io.appium.uiautomator2.unittest.test.internal.TestUtils.waitForElementInvisibility;
 import static io.appium.uiautomator2.unittest.test.internal.commands.DeviceCommands.createSession;
 import static io.appium.uiautomator2.unittest.test.internal.commands.DeviceCommands.deleteSession;
-import static io.appium.uiautomator2.unittest.test.internal.commands.DeviceCommands.updateSetting;
+import static io.appium.uiautomator2.unittest.test.internal.commands.DeviceCommands.findElement;
 import static io.appium.uiautomator2.unittest.test.internal.commands.ElementCommands.click;
 import static io.appium.uiautomator2.utils.Device.getUiDevice;
 import static org.junit.Assert.assertNotNull;
@@ -74,8 +73,8 @@ public abstract class BaseTest {
         createSession();
         Configurator.getInstance().setWaitForSelectorTimeout(0);
         Configurator.getInstance().setWaitForIdleTimeout(50000);
-        TestUtils.grantPermission(getTargetContext(), READ_EXTERNAL_STORAGE);
-        TestUtils.grantPermission(getTargetContext(), WRITE_EXTERNAL_STORAGE);
+        TestUtils.grantPermission(getApplicationContext(), READ_EXTERNAL_STORAGE);
+        TestUtils.grantPermission(getApplicationContext(), WRITE_EXTERNAL_STORAGE);
     }
 
     @AfterClass
@@ -91,8 +90,22 @@ public abstract class BaseTest {
 
     @Before
     public void launchAUT() throws JSONException {
+        dismissSystemAlert();
         startActivity(Config.APP_NAME);
         waitForElement(By.accessibilityId("Accessibility"));
+    }
+
+    protected void dismissSystemAlert() throws JSONException {
+        String[] ids = {"android:id/button1", "android:id/aerr_wait"};
+        for(String id : ids) {
+          try {
+            Logger.info("Checking for alert using id '" + id + "'");
+            Response response = findElement(By.id(id));
+            clickAndWaitForStaleness(response.getElementId());
+          } catch (Exception e) {
+            Logger.error("Error getting alert: ", e);
+          }
+        }
     }
 
     protected void startActivity(String activity) throws JSONException {
