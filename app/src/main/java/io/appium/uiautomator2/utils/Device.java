@@ -68,26 +68,64 @@ public abstract class Device {
         return getUiDevice().pressBack();
     }
 
-    /**
-     * reason for explicit method, in some cases google UiAutomator2 throwing exception
-     * while calling waitForIdle() which is causing appium UiAutomator2 server to fall in
-     * unexpected behaviour.
-     * for more info please refer
-     * https://code.google.com/p/android/issues/detail?id=73297
-     */
+
+/////////////////////////////////// MODIFIED BY MO: extends waitForIdel ///////////////////////////////////////////////////
+//    /**
+//     * reason for explicit method, in some cases google UiAutomator2 throwing exception
+//     * while calling waitForIdle() which is causing appium UiAutomator2 server to fall in
+//     * unexpected behaviour.
+//     * for more info please refer
+//     * https://code.google.com/p/android/issues/detail?id=73297
+//     */
+//    public static void waitForIdle() {
+//        try {
+//            getUiDevice().waitForIdle();
+//        } catch (Exception e) {
+//            Logger.error("Unable wait for AUT to idle");
+//        }
+//    }
+//
+//    public static void waitForIdle(long timeInMS) {
+//        try {
+//            getUiDevice().waitForIdle(timeInMS);
+//        } catch (Exception e) {
+//            Logger.error(String.format("Unable wait %s for AUT to idle", timeInMS));
+//        }
+//    }
+
+//    public static final long TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE = 1000 * 6;
+    public static final long TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE = 1000 * 5;
+    public static final long QUIET_TIME_TO_BE_CONSIDERD_IDLE_STATE = 3000;//ms
+
+    // Uiautomation 참조
+    private static final long QUICK_QUIET_TIME_TO_BE_CONSIDERD_IDLE_STATE = 500;//ms
+
     public static void waitForIdle() {
+        Device.waitQuicklyForIdle();
+    }
+
+    public static void waitQuicklyForIdle() {
         try {
-            getUiDevice().waitForIdle();
-        } catch (Exception e) {
-            Logger.error("Unable wait for AUT to idle");
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().waitForIdle(QUICK_QUIET_TIME_TO_BE_CONSIDERD_IDLE_STATE, TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
+        }catch (Exception e) {
+            Logger.error(String.format("Unable wait %d for AUT to idle", TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE));
         }
     }
 
     public static void waitForIdle(long timeInMS) {
         try {
-            getUiDevice().waitForIdle(timeInMS);
-        } catch (Exception e) {
-            Logger.error(String.format("Unable wait %s for AUT to idle", timeInMS));
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().waitForIdle(QUIET_TIME_TO_BE_CONSIDERD_IDLE_STATE, timeInMS);
+        }catch (Exception e) {
+            Logger.error(String.format("Unable wait %d for AUT to idle", timeInMS));
         }
     }
+
+    public static void waitForIdle(long idleTimeInMS, long globaTimeInMS) {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().waitForIdle(idleTimeInMS, globaTimeInMS);
+        }catch (Exception e) {
+            Logger.error(String.format("Unable wait %d for AUT to idle", globaTimeInMS));
+        }
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

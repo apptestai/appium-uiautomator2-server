@@ -190,6 +190,24 @@ public abstract class ElementHelpers {
             textToSend = AccessibilityNodeInfoHelpers.truncateTextToMaxLength(nodeInfo, textToSend);
         }
 
+        /////////////////////////////////// ADDED BY MO: set text using IME ///////////////////////////////////////////////////
+        // java.lang.NullPointerException on UiObject2.setText(): API Level <= 19
+        UnicodeIME ime = UnicodeIME.getCurrentUnicodeIME();
+        if (ime != null) {
+            try {
+                Logger.debug("Sending text to ime" + textToSend);
+                boolean success = ime.commitString(textToSend);
+                if (success) {
+                    return true;
+                }
+                Logger.debug("Fail to set text using ime");
+            } catch (Exception ige) {
+                Logger.error(ige);
+            }
+
+        }
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         Logger.debug("Sending text to element: " + textToSend);
         Bundle args = new Bundle();
         args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, textToSend);

@@ -151,5 +151,14 @@ public abstract class UiElement<R, E extends UiElement<R, E>> {
         return get(Attribute.BOUNDS);
     }
 
+    /////////////////////////////////// ADDED BY MO: additional attributes ///////////////////////////////////////////////////
+    public String getHashcode() {
+        return get(Attribute.HASHCODE);
+    }
+    public String getInputType() {
+        return get(Attribute.INPUTTYPE, "NULL");
+    }
+    /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
     protected abstract Map<Attribute, Object> getAttributes();
 }

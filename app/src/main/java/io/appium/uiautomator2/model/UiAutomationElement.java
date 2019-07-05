@@ -88,6 +88,12 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
         put(attributes, Attribute.BOUNDS, AccessibilityNodeInfoHelpers.getVisibleBounds(node).toShortString());
         put(attributes, Attribute.DISPLAYED, node.isVisibleToUser());
         // Skip CONTENT_SIZE as it is quite expensive to compute it for each element
+
+        /////////////////////////////////// ADDED BY MO: additional attributes //////////////////////////////////////////////////
+        put(attributes, Attribute.HASHCODE, String.valueOf(node.hashCode()));
+        put(attributes, Attribute.INPUTTYPE, AccessibilityNodeInfoHelpers.getNodeInputType(node));
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         this.attributes = Collections.unmodifiableMap(attributes);
         this.children = buildChildren(node);
     }
