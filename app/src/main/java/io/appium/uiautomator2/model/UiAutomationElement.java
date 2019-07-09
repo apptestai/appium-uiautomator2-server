@@ -149,9 +149,16 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
     }
 
     private void put(Map<Attribute, Object> attribs, Attribute key, Object value) {
-        if (value != null) {
+        /////////////////////////////////// MODIFIED BY MO: add empty value //////////////////////////////////////////////////
+//        if (value != null) {
+//            attribs.put(key, value);
+//        }
+        if (value == null) {
+            attribs.put(key, "");
+        } else {
             attribs.put(key, value);
         }
+        ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
     private void addToastMsgToRoot(CharSequence tokenMSG) {
