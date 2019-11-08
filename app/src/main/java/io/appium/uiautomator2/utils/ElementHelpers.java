@@ -191,20 +191,25 @@ public abstract class ElementHelpers {
         }
 
         /////////////////////////////////// ADDED BY MO: set text using IME ///////////////////////////////////////////////////
-        // java.lang.NullPointerException on UiObject2.setText(): API Level <= 19
-        ApptestAIUnicodeIME ime = ApptestAIUnicodeIME.getCurrentApptestAIUnicodeIME();
-        if (ime != null) {
-            try {
-                Logger.debug("Sending text to ime" + textToSend);
-                boolean success = ime.commitString(textToSend);
-                if (success) {
-                    return true;
+        // In some cases, the password field was not filled with IME.
+        if(!nodeInfo.isPassword()) {
+            // java.lang.NullPointerException on UiObject2.setText(): API Level <= 19
+            ApptestAIUnicodeIME ime = ApptestAIUnicodeIME.getCurrentApptestAIUnicodeIME();
+            if (ime != null) {
+                try {
+                    Logger.debug("Sending text to ime" + textToSend);
+                    boolean success = ime.commitString(textToSend);
+                    if (success) {
+                        return true;
+                    }
+                    Logger.debug("Fail to set text using ime");
+                } catch (Exception ige) {
+                    Logger.error(ige);
                 }
-                Logger.debug("Fail to set text using ime");
-            } catch (Exception ige) {
-                Logger.error(ige);
-            }
 
+            }
+        } else {
+            Logger.debug("The IME not use for a password field.");
         }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
 
