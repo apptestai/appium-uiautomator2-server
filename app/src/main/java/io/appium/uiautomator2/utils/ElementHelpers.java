@@ -192,7 +192,7 @@ public abstract class ElementHelpers {
 
         /////////////////////////////////// ADDED BY MO: set text using IME ///////////////////////////////////////////////////
         // java.lang.NullPointerException on UiObject2.setText(): API Level <= 19
-        UnicodeIME ime = UnicodeIME.getCurrentUnicodeIME();
+        ApptestAIUnicodeIME ime = ApptestAIUnicodeIME.getCurrentApptestAIUnicodeIME();
         if (ime != null) {
             try {
                 Logger.debug("Sending text to ime" + textToSend);

@@ -18,7 +18,7 @@ import java.nio.charset.CharsetDecoder;
  * Created by kyang on 2018. 4. 11..
  */
 
-public class UnicodeIME extends InputMethodService {
+public class ApptestAIUnicodeIME extends InputMethodService {
     private static final String TAG = "AppiumUnicodeIME";
 
     // encodings
@@ -49,10 +49,10 @@ public class UnicodeIME extends InputMethodService {
     private int mImeOptions;
 
 
-    private static UnicodeIME currentUnicodeIME = null;
+    private static ApptestAIUnicodeIME currentApptestAIUnicodeIME = null;
 
-    public static UnicodeIME getCurrentUnicodeIME() {
-        return currentUnicodeIME;
+    public static ApptestAIUnicodeIME getCurrentApptestAIUnicodeIME() {
+        return currentApptestAIUnicodeIME;
     }
 
     public boolean commitString(CharSequence value) {
@@ -75,7 +75,7 @@ public class UnicodeIME extends InputMethodService {
         }
         unicodeString = null;
         mImeOptions = attribute.imeOptions;
-        currentUnicodeIME = this;
+        currentApptestAIUnicodeIME = this;
     }
 
     @Override
@@ -83,7 +83,7 @@ public class UnicodeIME extends InputMethodService {
         Logger.debug(TAG + ": onFinishInput");
         super.onFinishInput();
         unicodeString = null;
-        currentUnicodeIME = null;
+        currentApptestAIUnicodeIME = null;
     }
 
     @Override

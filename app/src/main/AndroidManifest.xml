@@ -10,7 +10,8 @@
 
     <application android:allowBackup="true">
         <service
-            android:name="io.appium.uiautomator2.utils.UnicodeIME"
+            android:name="io.appium.uiautomator2.utils.ApptestAIUnicodeIME"
+            android:label="ApptestAI IME"
             android:enabled="true"
             android:permission="android.permission.BIND_INPUT_METHOD" >
             <intent-filter>
