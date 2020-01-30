@@ -1,6 +1,6 @@
 {
   "name": "appium-uiautomator2-server",
-  "version": "3.7.0",
+  "version": "4.5.4",
   "description": "A netty server with uiautomator2 handlers",
   "main": "index.js",
   "windowsBuildDir": "c:/tmp",
@@ -38,7 +38,7 @@
     "android-apidemos": "^3.0.0",
     "appium-adb": "^7.0.0",
     "appium-android-driver": "^4.12.0",
-    "appium-gulp-plugins": "^4.0.0",
+    "appium-gulp-plugins": "^5.0.0",
     "gulp": "^4.0.0"
   }
 }

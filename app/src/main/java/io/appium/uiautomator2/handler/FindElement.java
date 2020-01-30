@@ -39,12 +39,11 @@ import io.appium.uiautomator2.model.By.ById;
 import io.appium.uiautomator2.model.Session;
 import io.appium.uiautomator2.model.internal.CustomUiDevice;
 import io.appium.uiautomator2.model.internal.NativeAndroidBySelector;
-import io.appium.uiautomator2.server.WDStatus;
 import io.appium.uiautomator2.utils.ElementHelpers;
 import io.appium.uiautomator2.utils.Logger;
 import io.appium.uiautomator2.utils.NodeInfoList;
 
-import static io.appium.uiautomator2.utils.AXWindowHelpers.refreshRootAXNode;
+import static io.appium.uiautomator2.utils.AXWindowHelpers.refreshAccessibilityCache;
 import static io.appium.uiautomator2.utils.Device.getAndroidElement;
 import static io.appium.uiautomator2.utils.ElementLocationHelpers.getXPathNodeMatch;
 import static io.appium.uiautomator2.utils.ElementLocationHelpers.rewriteIdLocator;
@@ -58,7 +57,7 @@ public class FindElement extends SafeRequestHandler {
 
     @Override
     protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException, UiObjectNotFoundException {
-        final JSONObject payload = getPayload(request);
+        final JSONObject payload = toJSON(request);
         final String method = payload.getString("strategy");
         final String selector = payload.getString("selector");
         final String contextId = payload.getString("context");
@@ -76,7 +75,7 @@ public class FindElement extends SafeRequestHandler {
             throw new UiAutomator2Exception(e);
         }
         if (element == null) {
-            return new AppiumResponse(getSessionId(request), WDStatus.NO_SUCH_ELEMENT);
+            throw new ElementNotFoundException();
         }
 
         String id = UUID.randomUUID().toString();
@@ -84,12 +83,12 @@ public class FindElement extends SafeRequestHandler {
         Session session = AppiumUIA2Driver.getInstance().getSessionOrThrow();
         session.getKnownElements().add(androidElement);
         JSONObject result = ElementHelpers.toJSON(androidElement);
-        return new AppiumResponse(getSessionId(request), WDStatus.SUCCESS, result);
+        return new AppiumResponse(getSessionId(request), result);
     }
 
     @Nullable
     private Object findElement(By by) throws UiAutomator2Exception, UiObjectNotFoundException {
-        refreshRootAXNode();
+        refreshAccessibilityCache();
         if (by instanceof ById) {
             String locator = rewriteIdLocator((ById) by);
             return CustomUiDevice.getInstance().findObject(androidx.test.uiautomator.By.res(locator));

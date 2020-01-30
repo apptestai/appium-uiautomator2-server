@@ -16,6 +16,9 @@
 
 package io.appium.uiautomator2.handler;
 
+import io.appium.uiautomator2.common.exceptions.InvalidArgumentException;
+import io.appium.uiautomator2.common.exceptions.SessionNotCreatedException;
+import io.appium.uiautomator2.utils.w3c.W3CCapsUtils;
 import org.json.JSONException;
 
 import io.appium.uiautomator2.handler.request.SafeRequestHandler;
@@ -23,10 +26,13 @@ import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.model.NotificationListener;
-import io.appium.uiautomator2.server.WDStatus;
 import io.appium.uiautomator2.utils.Logger;
+import org.json.JSONObject;
+
+import java.util.Map;
 
 public class NewSession extends SafeRequestHandler {
+    private static final String CAPABILITIES_KEY = "capabilities";
 
     public NewSession(String mappedUri) {
         super(mappedUri);
@@ -34,10 +40,23 @@ public class NewSession extends SafeRequestHandler {
 
     @Override
     protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException {
-        String sessionID = AppiumUIA2Driver.getInstance()
-                .initializeSession(getPayload(request, "desiredCapabilities"));
-        NotificationListener.getInstance().start();
-        Logger.info("Session Created with SessionID:" + sessionID);
-        return new AppiumResponse(sessionID, WDStatus.SUCCESS, "Created Session");
+        try {
+            JSONObject w3cCaps = toJSON(request);
+            Object capabilities = w3cCaps.opt(CAPABILITIES_KEY);
+            if (!(capabilities instanceof JSONObject)) {
+                throw new InvalidArgumentException(String.format(
+                        "'%s' are mandatory for session creation", CAPABILITIES_KEY));
+            }
+            Map<String, Object> parsedCaps = W3CCapsUtils.parseCapabilities((JSONObject) capabilities);
+            String sessionID = AppiumUIA2Driver.getInstance().initializeSession(parsedCaps);
+            NotificationListener.getInstance().start();
+            Logger.info(String.format("Created the new session with SessionID: %s",  sessionID));
+            JSONObject result = new JSONObject();
+            result.put("sessionId", sessionID);
+            result.put("capabilities", capabilities);
+            return new AppiumResponse(sessionID, result);
+        } catch (Exception e) {
+            throw new SessionNotCreatedException(e);
+        }
     }
 }

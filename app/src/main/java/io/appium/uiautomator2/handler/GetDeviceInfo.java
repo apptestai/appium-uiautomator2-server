@@ -17,6 +17,7 @@
 package io.appium.uiautomator2.handler;
 
 import android.app.Instrumentation;
+import android.bluetooth.BluetoothAdapter;
 import android.net.Network;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
@@ -29,7 +30,6 @@ import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
 import io.appium.uiautomator2.handler.request.SafeRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
-import io.appium.uiautomator2.server.WDStatus;
 import io.appium.uiautomator2.utils.DeviceInfoHelper;
 import io.appium.uiautomator2.utils.Logger;
 
@@ -93,6 +93,16 @@ public class GetDeviceInfo extends SafeRequestHandler {
         return result;
     }
 
+    private static Object extractBluetoothInfo(DeviceInfoHelper deviceInfoHelper) throws JSONException {
+        BluetoothAdapter bluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (bluetoothAdapter == null) {
+            return JSONObject.NULL;
+        }
+        JSONObject result = new JSONObject();
+        result.put("state", deviceInfoHelper.toBluetoothStateString(bluetoothAdapter.getState()));
+        return result;
+    }
+
     @Override
     protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException {
         Logger.info("Get Device Info command");
@@ -109,7 +119,10 @@ public class GetDeviceInfo extends SafeRequestHandler {
         response.put("realDisplaySize", deviceInfoHelper.getRealDisplaySize());
         response.put("displayDensity", deviceInfoHelper.getDisplayDensity());
         response.put("networks", extractNetworkInfo(deviceInfoHelper));
+        response.put("locale", deviceInfoHelper.getLocale());
+        response.put("timeZone", deviceInfoHelper.getTimeZone());
+        response.put("bluetooth", extractBluetoothInfo(deviceInfoHelper));
 
-        return new AppiumResponse(getSessionId(request), WDStatus.SUCCESS, response);
+        return new AppiumResponse(getSessionId(request), response);
     }
 }

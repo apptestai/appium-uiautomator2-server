@@ -1,17 +1,34 @@
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package io.appium.uiautomator2.handler;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import androidx.test.uiautomator.UiObjectNotFoundException;
-import io.appium.uiautomator2.common.exceptions.InvalidCoordinatesException;
+
+import io.appium.uiautomator2.common.exceptions.ElementNotFoundException;
+import io.appium.uiautomator2.common.exceptions.InvalidElementStateException;
 import io.appium.uiautomator2.handler.request.SafeRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.model.AndroidElement;
 import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.model.Session;
-import io.appium.uiautomator2.server.WDStatus;
 import io.appium.uiautomator2.utils.Logger;
 import io.appium.uiautomator2.utils.Point;
 import io.appium.uiautomator2.utils.PositionHelper;
@@ -28,23 +45,15 @@ public class Drag extends SafeRequestHandler {
         // DragArguments is created on each execute which prevents leaking state
         // across executions.
         final DragArguments dragArgs = new DragArguments(request);
-        if (getPayload(request).has("elementId")) {
+        if (toJSON(request).has("elementId")) {
             return dragElement(dragArgs, request);
         }
         return drag(dragArgs, request);
     }
 
     private AppiumResponse drag(final DragArguments dragArgs, final IHttpRequest request) {
-        Point absStartPos;
-        Point absEndPos;
-
-        try {
-            absStartPos = PositionHelper.getDeviceAbsPos(dragArgs.start);
-            absEndPos = PositionHelper.getDeviceAbsPos(dragArgs.end);
-        } catch (final InvalidCoordinatesException e) {
-            Logger.error("The coordinates provided to an interactions operation are invalid. ", e);
-            return new AppiumResponse(getSessionId(request), WDStatus.INVALID_ELEMENT_COORDINATES, e);
-        }
+        Point absStartPos = PositionHelper.getDeviceAbsPos(dragArgs.start);
+        Point absEndPos = PositionHelper.getDeviceAbsPos(dragArgs.end);
 
         Logger.debug("Dragging from " + absStartPos.toString() + " to "
                 + absEndPos.toString() + " with steps: " + dragArgs.steps.toString());
@@ -52,20 +61,16 @@ public class Drag extends SafeRequestHandler {
                 absStartPos.y.intValue(), absEndPos.x.intValue(),
                 absEndPos.y.intValue(), dragArgs.steps);
         if (!res) {
-            return new AppiumResponse(getSessionId(request), WDStatus.UNKNOWN_ERROR, "Drag did not complete successfully");
+            throw new InvalidElementStateException("Drag did not complete successfully");
         }
-        return new AppiumResponse(getSessionId(request), res);
+        return new AppiumResponse(getSessionId(request));
     }
 
     private AppiumResponse dragElement(final DragArguments dragArgs, final IHttpRequest request) {
         Point absEndPos;
 
         if (dragArgs.destEl == null) {
-            try {
-                absEndPos = PositionHelper.getDeviceAbsPos(dragArgs.end);
-            } catch (final InvalidCoordinatesException e) {
-                return new AppiumResponse(getSessionId(request), WDStatus.UNKNOWN_ERROR, e);
-            }
+            absEndPos = PositionHelper.getDeviceAbsPos(dragArgs.end);
 
             Logger.debug("Dragging the element with id " + dragArgs.el.getId()
                     + " to " + absEndPos.toString() + " with steps: "
@@ -74,16 +79,11 @@ public class Drag extends SafeRequestHandler {
                 final boolean res = dragArgs.el.dragTo(absEndPos.x.intValue(),
                         absEndPos.y.intValue(), dragArgs.steps);
                 if (!res) {
-                    return new AppiumResponse(getSessionId(request), WDStatus.UNKNOWN_ERROR, "Drag did not complete successfully");
-                } else {
-                    return new AppiumResponse(getSessionId(request), res);
+                    throw new InvalidElementStateException("Drag did not complete successfully");
                 }
+                return new AppiumResponse(getSessionId(request));
             } catch (final UiObjectNotFoundException e) {
-                Logger.error("Drag did not complete successfully. Element not found: ", e);
-                return new AppiumResponse(getSessionId(request), WDStatus.NO_SUCH_ELEMENT);
-            } catch (InvalidCoordinatesException e) {
-                Logger.error("The coordinates provided to an interactions operation are invalid. ", e);
-                return new AppiumResponse(getSessionId(request), WDStatus.INVALID_ELEMENT_COORDINATES, e);
+                throw new ElementNotFoundException("Drag did not complete successfully. Element not found", e);
             }
         } else {
 
@@ -91,25 +91,19 @@ public class Drag extends SafeRequestHandler {
                     + " to destination element with id " + dragArgs.destEl.getId()
                     + " with steps: " + dragArgs.steps);
             try {
-                final boolean res = dragArgs.el.dragTo(dragArgs.destEl.getUiObject(),
-                        dragArgs.steps);
+                final boolean res = dragArgs.el.dragTo(dragArgs.destEl.getUiObject(), dragArgs.steps);
                 if (!res) {
-                    return new AppiumResponse(getSessionId(request), WDStatus.UNKNOWN_ERROR, "Drag did not complete successfully");
-                } else {
-                    return new AppiumResponse(getSessionId(request), res);
+                    throw new InvalidElementStateException("Drag did not complete successfully");
                 }
+                return new AppiumResponse(getSessionId(request));
             } catch (final UiObjectNotFoundException e) {
-                Logger.error("Drag did not complete successfully. Element not found: ", e);
-                return new AppiumResponse(getSessionId(request), WDStatus.NO_SUCH_ELEMENT);
-            } catch (InvalidCoordinatesException e) {
-                Logger.error("The coordinates provided to an interactions operation are invalid. ", e);
-                return new AppiumResponse(getSessionId(request), WDStatus.INVALID_ELEMENT_COORDINATES, e);
+                throw new ElementNotFoundException("Drag did not complete successfully. Element not found", e);
             }
         }
 
     }
 
-    private class DragArguments {
+    private static class DragArguments {
 
         public final Point start;
         public final Point end;
@@ -119,7 +113,7 @@ public class Drag extends SafeRequestHandler {
 
         public DragArguments(final IHttpRequest request) throws JSONException {
 
-            JSONObject payload = getPayload(request);
+            JSONObject payload = toJSON(request);
             Session session = AppiumUIA2Driver.getInstance().getSessionOrThrow();
 
             if (payload.has("elementId")) {

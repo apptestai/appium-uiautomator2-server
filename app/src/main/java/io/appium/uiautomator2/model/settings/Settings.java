@@ -24,6 +24,7 @@ public enum Settings {
     ALLOW_INVISIBLE_ELEMENTS(new AllowInvisibleElements()),
     COMPRESSED_LAYOUT_HIERARCHY(new CompressedLayoutHierarchy()),
     ELEMENT_RESPONSE_ATTRIBUTES(new ElementResponseAttributes()),
+    ENABLE_MULTI_WINDOWS(new EnableMultiWindows()),
     ENABLE_NOTIFICATION_LISTENER(new EnableNotificationListener()),
     KEY_INJECTION_DELAY(new KeyInjectionDelay()),
     SCROLL_ACKNOWLEDGMENT_TIMEOUT(new ScrollAcknowledgmentTimeout()),
@@ -32,7 +33,8 @@ public enum Settings {
     WAIT_FOR_SELECTOR_TIMEOUT(new WaitForSelectorTimeout()),
     NORMALIZE_TAG_NAMES(new NormalizeTagNames()),
     SHUTDOWN_ON_POWER_DISCONNECT(new ShutdownOnPowerDisconnect()),
-    TRACK_SCROLL_EVENTS(new TrackScrollEvents());
+    TRACK_SCROLL_EVENTS(new TrackScrollEvents()),
+    WAKE_LOCK_TIMEOUT(new WakeLockTimeout());
 
     private final ISetting setting;
 
