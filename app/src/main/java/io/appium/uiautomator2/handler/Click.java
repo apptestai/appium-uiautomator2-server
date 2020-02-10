@@ -67,7 +67,9 @@ public class Click extends SafeRequestHandler {
                         coords.x.intValue(), coords.y.intValue()));
             }
         }
-        Device.waitForIdle();
+        /////////////////////////////////// MODIFIED BY MO: responsibility of client ///////////////////////////////////////////////////
+        //Device.waitForIdle();
+        ////////////////////////////////////////
         return new AppiumResponse(getSessionId(request));
     }
 }

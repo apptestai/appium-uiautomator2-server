@@ -15,13 +15,16 @@
  */
 package io.appium.uiautomator2.core;
 
+import android.accessibilityservice.AccessibilityServiceInfo;
 import android.app.UiAutomation;
 import android.view.Display;
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import androidx.test.uiautomator.Configurator;
 import androidx.test.uiautomator.UiDevice;
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
 import io.appium.uiautomator2.utils.Device;
+import io.appium.uiautomator2.utils.Logger;
 
 import static io.appium.uiautomator2.utils.ReflectionUtils.invoke;
 import static io.appium.uiautomator2.utils.ReflectionUtils.method;
@@ -34,6 +37,14 @@ public class UiAutomatorBridge {
     public static synchronized UiAutomatorBridge getInstance() {
         if (INSTANCE == null) {
             INSTANCE = new UiAutomatorBridge();
+
+            /////////////////////////////////// ADDED BY MO: setting global WaitForIdleTimeout ///////////////////////////////////////////////////
+            try {
+                INSTANCE.configureAccessibilityService();
+            } catch (Exception e) {
+                Logger.info("ERROR", e);
+            }
+            //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         }
         return INSTANCE;
     }
@@ -55,4 +66,17 @@ public class UiAutomatorBridge {
     public Display getDefaultDisplay() throws UiAutomator2Exception {
         return (Display) invoke(method(UiDevice.class, "getDefaultDisplay"), Device.getUiDevice());
     }
+
+    /////////////////////////////////// ADDED BY MO: setting global WaitForIdleTimeout ///////////////////////////////////////////////////
+    private void configureAccessibilityService() {
+        // setting global WaitForIdleTimeout
+        Configurator configurator = Configurator.getInstance();
+        configurator.setWaitForIdleTimeout(Device.TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
+
+        UiAutomation uiAutomation = this.getUiAutomation();
+        AccessibilityServiceInfo serviceInfo = uiAutomation.getServiceInfo();
+        serviceInfo.flags = serviceInfo.flags | AccessibilityServiceInfo.FLAG_REPORT_VIEW_IDS | AccessibilityServiceInfo.FLAG_RETRIEVE_INTERACTIVE_WINDOWS;
+        uiAutomation.setServiceInfo(serviceInfo);
+    }
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 }

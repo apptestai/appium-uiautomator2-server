@@ -27,10 +27,19 @@ import java.util.List;
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
 import io.appium.uiautomator2.core.UiAutomatorBridge;
 import io.appium.uiautomator2.model.internal.CustomUiDevice;
+import io.appium.uiautomator2.model.settings.AXRootRetrievalTimeout;
 import io.appium.uiautomator2.model.settings.Settings;
+import io.appium.uiautomator2.model.settings.WaitForIdleTimeout;
 
 public class AXWindowHelpers {
-    private static final long AX_ROOT_RETRIEVAL_TIMEOUT = 10000;
+    /////////////////////////////////// ADDED BY MO: change default timeout(10sec -> 3sec)  ///////////////////////////////////////////////////
+//    public static final long AX_ROOT_RETRIEVAL_TIMEOUT = 10000;
+//    Use io.appium.uiautomator2.model.settings.AXRootRetrievalTimeout
+    private static long getAXRootRetrivalTimeout() {
+        final AXRootRetrievalTimeout axRootRetrievalTimeout = (AXRootRetrievalTimeout) Settings.AX_ROOT_RETRIEVAL_TIMEOUT.getSetting();
+        return axRootRetrievalTimeout.getValue();
+    }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     private static AccessibilityNodeInfo[] cachedWindowRoots = null;
 
     /**
@@ -58,7 +67,10 @@ public class AXWindowHelpers {
     }
 
     private static AccessibilityNodeInfo getActiveWindowRoot() {
-        long end = SystemClock.uptimeMillis() + AX_ROOT_RETRIEVAL_TIMEOUT;
+/////////////////////////////////// MODIFIED BY MO: change default timeout(10sec -> 3sec)  ///////////////////////////////////////////////////
+//        long end = SystemClock.uptimeMillis() + AX_ROOT_RETRIEVAL_TIMEOUT;
+        long end = SystemClock.uptimeMillis() + getAXRootRetrivalTimeout();
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         while (end > SystemClock.uptimeMillis()) {
             try {
                 AccessibilityNodeInfo root = UiAutomatorBridge.getInstance().getAccessibilityRootNode();
@@ -75,9 +87,12 @@ public class AXWindowHelpers {
                         "getRootAccessibilityNodeInActiveWindow() - ignoring it", e.getMessage()));
             }
         }
-        throw new UiAutomator2Exception(String.format(
-                "Timed out after %d milliseconds waiting for root AccessibilityNodeInfo",
-                AX_ROOT_RETRIEVAL_TIMEOUT));
+/////////////////////////////////// MODIFIED BY MO: change default timeout(10sec -> 3sec)  ///////////////////////////////////////////////////
+//        throw new UiAutomator2Exception(String.format(
+//                "Timed out after %d milliseconds waiting for root AccessibilityNodeInfo",
+//                AX_ROOT_RETRIEVAL_TIMEOUT));
+        throw new UiAutomator2Exception(String.format("Timed out after %d milliseconds waiting for root AccessibilityNodeInfo", getAXRootRetrivalTimeout()));
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     }
 
     private static AccessibilityNodeInfo[] getWindowRoots() {
