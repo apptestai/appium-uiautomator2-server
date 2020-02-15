@@ -22,7 +22,7 @@ public class WaitForIdle extends SafeRequestHandler {
 
     @Override
     protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException {
-        Long idleTimeout = ((WaitForIdleTimeout) Settings.WAIT_FOR_IDLE_TIMEOUT.getSetting().getValue()).getValue();
+        Long idleTimeout = ((WaitForIdleTimeout) Settings.WAIT_FOR_IDLE_TIMEOUT.getSetting()).getValue();
         Long globalTimeout = Device.TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE;
         long start = SystemClock.uptimeMillis();
         try {
