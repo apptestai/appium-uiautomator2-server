@@ -26,6 +26,7 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.test.uiautomator.UiDevice;
 import io.appium.uiautomator2.utils.Logger;
 
@@ -160,6 +161,29 @@ public class AccessibilityNodeInfoHelpers {
         return text;
     }
     /////////////////////////////////// ADDED BY MO: additional attributes ///////////////////////////////////////////////////
+    public static String getHashcode(@Nullable AccessibilityNodeInfo nodeInfo) {
+        return String.valueOf(nodeInfo.hashCode());
+    }
+
+    public static boolean isEditable(@Nullable AccessibilityNodeInfo nodeInfo) {
+        return nodeInfo != null && nodeInfo.isEditable();
+    }
+
+    @Nullable
+    @RequiresApi(Build.VERSION_CODES.O)
+    public static String getHintText(@Nullable AccessibilityNodeInfo nodeInfo, boolean replaceNull) {
+        if (nodeInfo == null) {
+            return replaceNull ? "" : null;
+        }
+
+        return charSequenceToString(nodeInfo.getHintText(), replaceNull);
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    public static boolean isShowingHintText(@Nullable AccessibilityNodeInfo nodeInfo) {
+        return nodeInfo != null && nodeInfo.isShowingHintText();
+    }
+
     enum NodeInputType {
         NULL,
         DATETIME,

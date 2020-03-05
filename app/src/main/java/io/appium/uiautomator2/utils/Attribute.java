@@ -52,7 +52,9 @@ public enum Attribute {
     /////////////////////////////////// ADDED BY MO: additional attributes ///////////////////////////////////////////////////
     HASHCODE(new String[]{"hashcode"}), // AccessibilityNodeInfo#hashCode()
     EDITABLE(new String[]{"editable"}), // AccessibilityNodeInfo#isEditable()
-    INPUTTYPE(new String[]{"input-type"}); //AccessibilityNodeInfo#getInputType()
+    INPUTTYPE(new String[]{"input-type"}), //AccessibilityNodeInfo#getInputType()
+    HINT_TEXT(new String[]{"hint-text"}), //AccessibilityNodeInfo#getHintText()
+    SHOWING_HINT_TEXT(new String[]{"showing-hint-text"}); //AccessibilityNodeInfo#isShowingHintText()
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     private final String[] aliases;

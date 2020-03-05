@@ -17,6 +17,7 @@
 package io.appium.uiautomator2.model;
 
 import android.annotation.TargetApi;
+import android.os.Build;
 import android.util.Range;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
@@ -90,9 +91,14 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
         // Skip CONTENT_SIZE as it is quite expensive to compute it for each element
 
         /////////////////////////////////// ADDED BY MO: additional attributes //////////////////////////////////////////////////
-        put(attributes, Attribute.HASHCODE, String.valueOf(node.hashCode()));
-        put(attributes, Attribute.EDITABLE, String.valueOf(node.isEditable()));
+        put(attributes, Attribute.HASHCODE, AccessibilityNodeInfoHelpers.getHashcode(node));
+        put(attributes, Attribute.EDITABLE, AccessibilityNodeInfoHelpers.isEditable(node));
         put(attributes, Attribute.INPUTTYPE, AccessibilityNodeInfoHelpers.getNodeInputType(node));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            put(attributes, Attribute.HINT_TEXT, AccessibilityNodeInfoHelpers.getHintText(node, true));
+            put(attributes, Attribute.SHOWING_HINT_TEXT, AccessibilityNodeInfoHelpers.isShowingHintText(node));
+        }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         this.attributes = Collections.unmodifiableMap(attributes);

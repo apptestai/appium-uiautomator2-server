@@ -155,8 +155,17 @@ public abstract class UiElement<R, E extends UiElement<R, E>> {
     public String getHashcode() {
         return get(Attribute.HASHCODE);
     }
+    public boolean isEditable() {
+        return get(Attribute.EDITABLE, false);
+    }
     public String getInputType() {
         return get(Attribute.INPUTTYPE, "NULL");
+    }
+    public String getHintText() {
+        return get(Attribute.HINT_TEXT);
+    }
+    public boolean isShowingHintText() {
+        return get(Attribute.SHOWING_HINT_TEXT, false);
     }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
