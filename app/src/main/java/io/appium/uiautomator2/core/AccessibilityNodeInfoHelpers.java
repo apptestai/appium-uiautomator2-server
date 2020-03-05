@@ -179,11 +179,6 @@ public class AccessibilityNodeInfoHelpers {
         return charSequenceToString(nodeInfo.getHintText(), replaceNull);
     }
 
-    @RequiresApi(Build.VERSION_CODES.O)
-    public static boolean isShowingHintText(@Nullable AccessibilityNodeInfo nodeInfo) {
-        return nodeInfo != null && nodeInfo.isShowingHintText();
-    }
-
     enum NodeInputType {
         NULL,
         DATETIME,

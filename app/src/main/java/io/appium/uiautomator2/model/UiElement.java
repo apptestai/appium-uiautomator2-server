@@ -164,9 +164,6 @@ public abstract class UiElement<R, E extends UiElement<R, E>> {
     public String getHintText() {
         return get(Attribute.HINT_TEXT);
     }
-    public boolean isShowingHintText() {
-        return get(Attribute.SHOWING_HINT_TEXT, false);
-    }
     /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
     protected abstract Map<Attribute, Object> getAttributes();

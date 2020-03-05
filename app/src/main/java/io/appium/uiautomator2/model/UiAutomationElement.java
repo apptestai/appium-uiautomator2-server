@@ -97,7 +97,6 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             put(attributes, Attribute.HINT_TEXT, AccessibilityNodeInfoHelpers.getHintText(node, true));
-            put(attributes, Attribute.SHOWING_HINT_TEXT, AccessibilityNodeInfoHelpers.isShowingHintText(node));
         }
         /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
