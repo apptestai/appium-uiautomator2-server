@@ -73,6 +73,7 @@ import io.appium.uiautomator2.handler.TouchMove;
 import io.appium.uiautomator2.handler.TouchUp;
 import io.appium.uiautomator2.handler.UpdateSettings;
 import io.appium.uiautomator2.handler.W3CActions;
+import io.appium.uiautomator2.handler.WaitForIdle;
 import io.appium.uiautomator2.handler.request.BaseRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
@@ -141,6 +142,10 @@ public class AppiumServlet implements IHttpServlet {
         register(postHandler, new SetClipboard("/wd/hub/session/:sessionId/appium/device/set_clipboard"));
         register(postHandler, new AcceptAlert("/wd/hub/session/:sessionId/alert/accept"));
         register(postHandler, new DismissAlert("/wd/hub/session/:sessionId/alert/dismiss"));
+
+        /////////////////////////////////// ADDED BY MO: waitForIdle ///////////////////////////////////////////////////
+        register(postHandler, new WaitForIdle("/wd/hub/session/:sessionId/appium/device/wait_for_idle"));
+        //END
     }
 
     private void registerGetHandler() {

@@ -20,11 +20,13 @@ import android.annotation.TargetApi;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.InputType;
 import android.util.Range;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.test.uiautomator.UiDevice;
 import io.appium.uiautomator2.utils.Logger;
 
@@ -158,4 +160,85 @@ public class AccessibilityNodeInfoHelpers {
         }
         return text;
     }
+
+    /////////////////////////////////// ADDED BY MO: additional attributes ///////////////////////////////////////////////////
+    public static String getHashcode(@Nullable AccessibilityNodeInfo nodeInfo) {
+        return String.valueOf(nodeInfo.hashCode());
+    }
+
+    public static boolean isEditable(@Nullable AccessibilityNodeInfo nodeInfo) {
+        return nodeInfo != null && nodeInfo.isEditable();
+    }
+
+    @Nullable
+    @RequiresApi(Build.VERSION_CODES.O)
+    public static String getHintText(@Nullable AccessibilityNodeInfo nodeInfo, boolean replaceNull) {
+        if (nodeInfo == null) {
+            return replaceNull ? "" : null;
+        }
+
+        return charSequenceToString(nodeInfo.getHintText(), replaceNull);
+    }
+
+    enum NodeInputType {
+        NULL,
+        DATETIME,
+        NUMBER,
+        PHONE,
+        POSTAL_ADDRESS,
+        PERSON_NAME,
+        EMAIL_ADDRESS,
+        TEXT
+    }
+
+    private static boolean _hasType(int atype, int btype) {
+        return ((atype & btype) == btype);
+    }
+
+    public static String  getNodeInputType(AccessibilityNodeInfo node) {
+        // < API_19
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.KITKAT) {
+            return NodeInputType.NULL.name();
+        }
+
+        int inputType = node.getInputType();
+        // unknown
+        if (inputType == InputType.TYPE_NULL) {
+            return NodeInputType.NULL.name();
+        }
+
+        // phone
+        if (_hasType(inputType, InputType.TYPE_CLASS_PHONE)) {
+            return NodeInputType.PHONE.name();
+        }
+
+        // POSTAL_ADDRESS
+        if (_hasType(inputType, InputType.TYPE_TEXT_VARIATION_POSTAL_ADDRESS)) {
+            return NodeInputType.POSTAL_ADDRESS.name();
+        }
+
+        // PERSON_NAME
+        if (_hasType(inputType, InputType.TYPE_TEXT_VARIATION_PERSON_NAME)) {
+            return NodeInputType.PERSON_NAME.name();
+        }
+
+        // EMAIL_ADDRESS
+        if (_hasType(inputType, InputType.TYPE_TEXT_VARIATION_EMAIL_ADDRESS)
+                || _hasType(inputType, InputType.TYPE_TEXT_VARIATION_WEB_EMAIL_ADDRESS)) {
+            return NodeInputType.EMAIL_ADDRESS.name();
+        }
+
+        // datetime
+        if (_hasType(inputType, InputType.TYPE_CLASS_DATETIME)) {
+            return NodeInputType.DATETIME.name();
+        }
+
+        // number
+        if (_hasType(inputType, InputType.TYPE_CLASS_NUMBER)) {
+            return NodeInputType.NUMBER.name();
+        }
+
+        return NodeInputType.TEXT.name();
+    }
+    //END
 }

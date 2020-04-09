@@ -47,7 +47,14 @@ public enum Attribute {
     BOUNDS(new String[]{"bounds"}),
     INDEX(new String[]{"index"}, false, true),
     DISPLAYED(new String[]{"displayed"}),
-    CONTENT_SIZE(new String[]{"contentSize"}, true, false);
+    CONTENT_SIZE(new String[]{"contentSize"}, true, false),
+
+    /////////////////////////////////// ADDED BY MO: additional attributes ///////////////////////////////////////////////////
+    HASHCODE(new String[]{"hashcode"}), // AccessibilityNodeInfo#hashCode()
+    EDITABLE(new String[]{"editable"}), // AccessibilityNodeInfo#isEditable()
+    INPUTTYPE(new String[]{"input-type"}), //AccessibilityNodeInfo#getInputType()
+    HINT_TEXT(new String[]{"hint-text"}); //AccessibilityNodeInfo#getHintText()
+    //END
 
     private final String[] aliases;
     // Defines if the attribute is visible to the user from getAttribute call

@@ -17,6 +17,7 @@
 package io.appium.uiautomator2.model;
 
 import android.annotation.TargetApi;
+import android.os.Build;
 import android.util.Range;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Toast;
@@ -88,6 +89,17 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
         put(attributes, Attribute.BOUNDS, AccessibilityNodeInfoHelpers.getVisibleBounds(node).toShortString());
         put(attributes, Attribute.DISPLAYED, node.isVisibleToUser());
         // Skip CONTENT_SIZE as it is quite expensive to compute it for each element
+
+        /////////////////////////////////// ADDED BY MO: additional attributes //////////////////////////////////////////////////
+        put(attributes, Attribute.HASHCODE, AccessibilityNodeInfoHelpers.getHashcode(node));
+        put(attributes, Attribute.EDITABLE, AccessibilityNodeInfoHelpers.isEditable(node));
+        put(attributes, Attribute.INPUTTYPE, AccessibilityNodeInfoHelpers.getNodeInputType(node));
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            put(attributes, Attribute.HINT_TEXT, AccessibilityNodeInfoHelpers.getHintText(node, true));
+        }
+        //END
+
         this.attributes = Collections.unmodifiableMap(attributes);
         this.children = buildChildren(node);
     }
@@ -146,9 +158,16 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
     }
 
     private void put(Map<Attribute, Object> attribs, Attribute key, Object value) {
-        if (value != null) {
+        /////////////////////////////////// MODIFIED BY MO: add empty value //////////////////////////////////////////////////
+//        if (value != null) {
+//            attribs.put(key, value);
+//        }
+        if (value == null) {
+            attribs.put(key, "");
+        } else {
             attribs.put(key, value);
         }
+        //END
     }
 
     private void addToastMsgToRoot(CharSequence tokenMSG) {

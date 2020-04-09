@@ -103,4 +103,16 @@ public abstract class Device {
             Logger.error(String.format("Unable wait %sms for AUT to idle", timeInMS));
         }
     }
+
+    /////////////////////////////////// ADDED BY MO: extends waitForIdel ///////////////////////////////////////////////////
+    public static final long TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE = 1000 * 5;
+
+    public static void waitForIdle(long idleTimeInMS, long globaTimeInMS) {
+        try {
+            InstrumentationRegistry.getInstrumentation().getUiAutomation().waitForIdle(idleTimeInMS, globaTimeInMS);
+        }catch (Exception e) {
+            Logger.error(String.format("Unable wait %d for AUT to idle", globaTimeInMS));
+        }
+    }
+    //END
 }

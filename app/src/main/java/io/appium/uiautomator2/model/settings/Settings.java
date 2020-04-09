@@ -34,7 +34,12 @@ public enum Settings {
     NORMALIZE_TAG_NAMES(new NormalizeTagNames()),
     SHUTDOWN_ON_POWER_DISCONNECT(new ShutdownOnPowerDisconnect()),
     TRACK_SCROLL_EVENTS(new TrackScrollEvents()),
-    WAKE_LOCK_TIMEOUT(new WakeLockTimeout());
+    WAKE_LOCK_TIMEOUT(new WakeLockTimeout()),
+
+    //////////////////////// ADDED BY MO: add a setting value of AX_ROOT_RETRIEVAL_TIMEOUT /////////////////////////////////////
+    AX_ROOT_RETRIEVAL_TIMEOUT(new AXRootRetrievalTimeout());
+    //END
+
 
     private final ISetting setting;
 
