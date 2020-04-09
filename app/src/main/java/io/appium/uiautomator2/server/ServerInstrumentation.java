@@ -16,13 +16,19 @@
 
 package io.appium.uiautomator2.server;
 
+import android.app.UiAutomation;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Looper;
 import android.os.PowerManager;
 
 import android.os.SystemClock;
+
+import androidx.test.platform.app.InstrumentationRegistry;
+import androidx.test.uiautomator.Configurator;
+
 import io.appium.uiautomator2.common.exceptions.SessionRemovedException;
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
 import io.appium.uiautomator2.model.settings.Settings;
@@ -50,6 +56,23 @@ public class ServerInstrumentation {
     private long wakeLockTimeoutMs = 0;
     private boolean isServerStopped;
 
+    private void setAccessibilityServiceState() {
+        String disableSuppressAccessibilityService = InstrumentationRegistry.getArguments().getString("DISABLE_SUPPRESS_ACCESSIBILITY_SERVICES");
+        if (disableSuppressAccessibilityService == null || Build.VERSION.SDK_INT < Build.VERSION_CODES.N) {
+            return;
+        }
+
+        boolean shouldDisableSuppressAccessibilityService = Boolean.parseBoolean(disableSuppressAccessibilityService);
+        if (shouldDisableSuppressAccessibilityService) {
+            Configurator.getInstance().setUiAutomationFlags(
+                    UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        } else {
+            // We can disable UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES
+            // only when we set the value as zero
+            Configurator.getInstance().setUiAutomationFlags(0);
+        }
+    }
+
     private ServerInstrumentation(Context context, int serverPort) {
         if (!isValidPort(serverPort)) {
             throw new UiAutomator2Exception(String.format(
@@ -57,6 +80,8 @@ public class ServerInstrumentation {
         }
         this.serverPort = serverPort;
         this.powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
+
+        setAccessibilityServiceState();
     }
 
     public static synchronized ServerInstrumentation getInstance() {
