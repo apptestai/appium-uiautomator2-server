@@ -34,6 +34,11 @@ import static io.appium.uiautomator2.utils.Device.getUiDevice;
 import static io.appium.uiautomator2.utils.StringHelpers.charSequenceToNullableString;
 import static io.appium.uiautomator2.utils.StringHelpers.charSequenceToString;
 
+/////////////////////////////////// ADDED BY MO: additional attributes ///////////////////////////////////////////////////
+import static io.appium.uiautomator2.utils.ReflectionUtils.method;
+import static io.appium.uiautomator2.utils.ReflectionUtils.invoke;
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 /**
  * This class contains static helper methods to work with {@link AccessibilityNodeInfo}
  */
@@ -162,7 +167,19 @@ public class AccessibilityNodeInfoHelpers {
     }
 
     /////////////////////////////////// ADDED BY MO: additional attributes ///////////////////////////////////////////////////
+
+    /**
+     * The hashCode value can be duplicated.
+     * By default, the mSourceNodeId is used.
+     * @param nodeInfo
+     * @return
+     */
     public static String getHashcode(@Nullable AccessibilityNodeInfo nodeInfo) {
+        try {
+            return String.valueOf(invoke(method(AccessibilityNodeInfo.class, "getSourceNodeId"), nodeInfo));
+        }catch (Exception ign) {
+            Logger.debug(ign);
+        }
         return String.valueOf(nodeInfo.hashCode());
     }
 
