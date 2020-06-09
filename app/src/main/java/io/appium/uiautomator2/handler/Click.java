@@ -16,6 +16,9 @@
 
 package io.appium.uiautomator2.handler;
 
+import io.appium.uiautomator2.core.UiAutomatorBridge;
+import io.appium.uiautomator2.model.settings.Settings;
+import io.appium.uiautomator2.model.settings.UseDeviceRealSize;
 import io.appium.uiautomator2.utils.w3c.W3CElementUtils;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -61,10 +64,25 @@ public class Click extends SafeRequestHandler {
             Point coords = new Point(Double.parseDouble(payload.get("x").toString()),
                     Double.parseDouble(payload.get("y").toString()));
             coords = PositionHelper.getDeviceAbsPos(coords);
-            if (!getUiDevice().click(coords.x.intValue(), coords.y.intValue())) {
-                throw new InvalidElementStateException(
-                        String.format("Click failed at (%s, %s) coordinates",
-                        coords.x.intValue(), coords.y.intValue()));
+
+            /////////////////////////////////// MODIFIED BY MO: In Galaxy series, the display size is cut off by navigation bar. However, the navigation bar is hidden. ///////////
+            //Solve: Click failed at (x, y) coordinates
+//            if (!getUiDevice().click(coords.x.intValue(), coords.y.intValue())) {
+//                throw new InvalidElementStateException(
+//                        String.format("Click failed at (%s, %s) coordinates",
+//                        coords.x.intValue(), coords.y.intValue()));
+//            }
+
+            UseDeviceRealSize setting = (UseDeviceRealSize) Settings.USE_DEVICE_REAL_SIZE.getSetting();
+            boolean success;
+            if (setting.getValue()) {
+                success = UiAutomatorBridge.getInstance().getInteractionController().clickNoSync(coords.x.intValue(), coords.y.intValue());
+            } else {
+                success = getUiDevice().click(coords.x.intValue(), coords.y.intValue());
+            }
+
+            if (!success) {
+                throw new InvalidElementStateException(String.format("Click failed at (%s, %s) coordinates", coords.x.intValue(), coords.y.intValue()));
             }
         }
         /////////////////////////////////// MODIFIED BY MO: responsibility of client ///////////////////////////////////////////////////

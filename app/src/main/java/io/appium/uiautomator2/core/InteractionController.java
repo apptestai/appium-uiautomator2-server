@@ -38,11 +38,23 @@ public class InteractionController {
     private static final String METHOD_TOUCH_DOWN = "touchDown";
     private static final String METHOD_TOUCH_UP = "touchUp";
     private static final String METHOD_TOUCH_MOVE = "touchMove";
+
+    /////////////////////////////////// ADDED BY MO: In Galaxy series, the display size is cut off by navigation bar. However, the navigation bar is hidden. ///////////
+    //Solve: Click failed at (x, y) coordinates
+    private static final String METHOD_CLICK_NO_SYNC = "clickNoSync";
+    //END
     private final Object interactionController;
 
     public InteractionController(Object interactionController) {
         this.interactionController = interactionController;
     }
+
+    /////////////////////////////////// ADDED BY MO: In Galaxy series, the display size is cut off by navigation bar. However, the navigation bar is hidden. ///////////
+    //Solve: Click failed at (x, y) coordinates
+    public boolean clickNoSync(int x, int y) {
+        return (Boolean) invoke(method(CLASS_INTERACTION_CONTROLLER, METHOD_CLICK_NO_SYNC, int.class, int.class), interactionController, x, y);
+    }
+    //END
 
     public boolean sendKey(int keyCode, int metaState) throws UiAutomator2Exception {
         return (Boolean) invoke(method(CLASS_INTERACTION_CONTROLLER, METHOD_SEND_KEY, int.class, int.class),
