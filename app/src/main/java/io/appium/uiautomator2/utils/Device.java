@@ -1,6 +1,8 @@
 package io.appium.uiautomator2.utils;
 
 import android.os.RemoteException;
+import android.util.DisplayMetrics;
+import android.view.Display;
 
 import androidx.annotation.Nullable;
 import androidx.test.platform.app.InstrumentationRegistry;
@@ -12,11 +14,13 @@ import androidx.test.uiautomator.UiScrollable;
 import androidx.test.uiautomator.UiSelector;
 
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
+import io.appium.uiautomator2.core.UiAutomatorBridge;
 import io.appium.uiautomator2.model.AndroidElement;
 import io.appium.uiautomator2.model.By;
 import io.appium.uiautomator2.model.UiObject2Element;
 import io.appium.uiautomator2.model.UiObjectElement;
 import io.appium.uiautomator2.model.settings.Settings;
+import io.appium.uiautomator2.model.settings.UseDeviceRealSize;
 import io.appium.uiautomator2.model.settings.WaitForIdleTimeout;
 
 public abstract class Device {
@@ -113,6 +117,21 @@ public abstract class Device {
         }catch (Exception e) {
             Logger.error(String.format("Unable wait %d for AUT to idle", globaTimeInMS));
         }
+    }
+    //END
+
+    /////////////////////////////////// MODIFIED BY MO: In Galaxy series, the display size is cut off by navigation bar. However, the navigation bar is hidden. ///////////
+    public static android.graphics.Point getDeviceSize() {
+        Display display = UiAutomatorBridge.getInstance().getDefaultDisplay();
+        android.graphics.Point size = new android.graphics.Point();
+
+        UseDeviceRealSize setting = (UseDeviceRealSize) Settings.USE_DEVICE_REAL_SIZE.getSetting();
+        if (setting.getValue()) {
+            display.getRealSize(size);
+        } else {
+            display.getSize(size);
+        }
+        return size;
     }
     //END
 }

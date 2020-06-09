@@ -16,6 +16,8 @@
 
 package io.appium.uiautomator2.handler;
 
+import android.graphics.Point;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -24,6 +26,7 @@ import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.utils.Logger;
 
+import static io.appium.uiautomator2.utils.Device.getDeviceSize;
 import static io.appium.uiautomator2.utils.Device.getUiDevice;
 
 /**
@@ -40,8 +43,14 @@ public class GetDeviceSize extends SafeRequestHandler {
         Logger.info("Get window size of the device");
         // only makes sense on a device
         final JSONObject res = new JSONObject();
-        res.put("height", getUiDevice().getDisplayHeight());
-        res.put("width", getUiDevice().getDisplayWidth());
+        /////////////////////////////////// MODIFIED BY MO: In Galaxy series, the display size is cut off by navigation bar. However, the navigation bar is hidden. ///////////
+//        res.put("height", getUiDevice().getDisplayHeight());
+//        res.put("width", getUiDevice().getDisplayWidth());
+        Point size = getDeviceSize();
+        res.put("height", size.y);
+        res.put("width", size.x);
+        //END
+
         return new AppiumResponse(getSessionId(request), res);
     }
 }

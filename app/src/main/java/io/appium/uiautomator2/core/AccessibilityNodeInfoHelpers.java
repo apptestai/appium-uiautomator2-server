@@ -17,24 +17,28 @@ package io.appium.uiautomator2.core;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Range;
+import android.view.Display;
 import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.accessibility.AccessibilityNodeInfo.AccessibilityAction;
 
 import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
-import androidx.test.uiautomator.UiDevice;
+
+import io.appium.uiautomator2.model.settings.Settings;
+import io.appium.uiautomator2.model.settings.UseDeviceRealSize;
 import io.appium.uiautomator2.utils.Logger;
 
-import static io.appium.uiautomator2.utils.Device.getUiDevice;
 import static io.appium.uiautomator2.utils.StringHelpers.charSequenceToNullableString;
 import static io.appium.uiautomator2.utils.StringHelpers.charSequenceToString;
 
 /////////////////////////////////// ADDED BY MO: additional attributes ///////////////////////////////////////////////////
+import static io.appium.uiautomator2.utils.Device.getDeviceSize;
 import static io.appium.uiautomator2.utils.ReflectionUtils.method;
 import static io.appium.uiautomator2.utils.ReflectionUtils.invoke;
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -109,10 +113,15 @@ public class AccessibilityNodeInfoHelpers {
         // Get the object bounds in screen coordinates
         Rect ret = new Rect();
         node.getBoundsInScreen(ret);
-        UiDevice uiDevice = getUiDevice();
 
-        // Trim any portion of the bounds that are not on the screen
-        Rect screen = new Rect(0, 0, uiDevice.getDisplayWidth(), uiDevice.getDisplayHeight());
+/////////////////////////////////// MODIFIED BY MO: In Galaxy series, the display size is cut off by navigation bar. However, the navigation bar is hidden. ///////////
+//        UiDevice uiDevice = getUiDevice();
+//        // Trim any portion of the bounds that are not on the screen
+//        Rect screen = new Rect(0, 0, uiDevice.getDisplayWidth(), uiDevice.getDisplayHeight());
+        Point size = getDeviceSize();
+        Rect screen = new Rect(0, 0, size.x, size.y);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
         ret.intersect(screen);
 
         // Find the visible bounds of our first scrollable ancestor 

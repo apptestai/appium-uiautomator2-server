@@ -22,6 +22,8 @@ import androidx.test.uiautomator.UiDevice;
 import androidx.test.uiautomator.UiObjectNotFoundException;
 import io.appium.uiautomator2.common.exceptions.InvalidCoordinatesException;
 
+import static io.appium.uiautomator2.utils.Device.getDeviceSize;
+
 public abstract class PositionHelper {
 
     /**
@@ -75,9 +77,12 @@ public abstract class PositionHelper {
     }
 
     public static Point getDeviceAbsPos(final Point point) throws InvalidCoordinatesException {
-        final UiDevice d = UiDevice.getInstance();
-        final Rect displayRect = new Rect(0, 0, d.getDisplayWidth(), d.getDisplayHeight());
-
+/////////////////////////////////// MODIFIED BY MO: In Galaxy series, the display size is cut off by navigation bar. However, the navigation bar is hidden. ///////////
+//        final UiDevice d = UiDevice.getInstance();
+//        final Rect displayRect = new Rect(0, 0, d.getDisplayWidth(), d.getDisplayHeight());
+        android.graphics.Point size = getDeviceSize();
+        final Rect displayRect = new Rect(0, 0, size.x, size.y);
+//END
         Logger.debug("Display bounds: " + displayRect.toShortString());
 
         return getAbsolutePosition(point, displayRect, new Point(), true);

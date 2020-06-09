@@ -18,6 +18,7 @@ import io.appium.uiautomator2.utils.Logger;
 import io.appium.uiautomator2.utils.Point;
 import io.appium.uiautomator2.utils.PositionHelper;
 
+import static io.appium.uiautomator2.utils.Device.getDeviceSize;
 import static io.appium.uiautomator2.utils.Device.getUiDevice;
 
 public class Flick extends SafeRequestHandler {
@@ -80,7 +81,12 @@ public class Flick extends SafeRequestHandler {
         double xOff;
         double yOff;
 
-        final double value = Math.min(getUiDevice().getDisplayHeight(), getUiDevice().getDisplayWidth());
+
+        /////////////////////////////////// MODIFIED BY MO: In Galaxy series, the display size is cut off by navigation bar. However, the navigation bar is hidden. ///////////
+//        final double value = Math.min(getUiDevice().getDisplayHeight(), getUiDevice().getDisplayWidth());
+        android.graphics.Point size = getDeviceSize();
+        final double value = Math.min(size.y, size.x);
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
         if (speedRatio < 1) {
             yOff = value / 4;

@@ -41,6 +41,7 @@ import java.io.InputStream;
 import java.util.concurrent.Semaphore;
 
 import androidx.annotation.Nullable;
+
 import io.appium.uiautomator2.common.exceptions.InvalidSelectorException;
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
 import io.appium.uiautomator2.model.NotificationListener;
@@ -53,6 +54,7 @@ import io.appium.uiautomator2.utils.NodeInfoList;
 
 import static io.appium.uiautomator2.model.UiAutomationElement.rebuildForNewRoots;
 import static io.appium.uiautomator2.utils.AXWindowHelpers.getCachedWindowRoots;
+import static io.appium.uiautomator2.utils.Device.getDeviceSize;
 import static io.appium.uiautomator2.utils.XMLHelpers.toNodeName;
 import static io.appium.uiautomator2.utils.XMLHelpers.toSafeString;
 import static net.gcardone.junidecode.Junidecode.unidecode;
@@ -86,8 +88,10 @@ public class AccessibilityNodeInfoDumper {
 
     private void addDisplayInfo() throws IOException {
         Display display = UiAutomatorBridge.getInstance().getDefaultDisplay();
-        Point size = new Point();
-        display.getSize(size);
+/////////////////////////////////// MODIFIED BY MO: In Galaxy series, the display size is cut off by navigation bar. However, the navigation bar is hidden. ///////////
+//        Point size = new Point();
+        Point size = getDeviceSize();
+//END
         serializer.attribute(NAMESPACE, "rotation", Integer.toString(display.getRotation()));
         serializer.attribute(NAMESPACE, "width", Integer.toString(size.x));
         serializer.attribute(NAMESPACE, "height", Integer.toString(size.y));

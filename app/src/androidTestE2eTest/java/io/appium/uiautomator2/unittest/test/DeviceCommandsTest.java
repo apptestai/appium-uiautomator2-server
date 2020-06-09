@@ -686,6 +686,8 @@ public class DeviceCommandsTest extends BaseTest {
         settings.put("waitForIdleTimeout", 50001);
         settings.put("waitForSelectorTimeout", 10);
         settings.put("shutdownOnPowerDisconnect", false);
+
+
         try {
             for (Map.Entry<String, Object> entry : settings.entrySet()) {
                 updateSetting(entry.getKey(), entry.getValue());
