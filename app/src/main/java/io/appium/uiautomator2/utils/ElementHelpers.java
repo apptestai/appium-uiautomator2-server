@@ -199,11 +199,18 @@ public abstract class ElementHelpers {
             ApptestAIUnicodeIME ime = ApptestAIUnicodeIME.getCurrentIME();
             if (ime != null) {
                 try {
-                    Logger.debug("Sending text to ime" + textToSend);
-                    boolean success = ime.commitString(textToSend);
-                    if (success) {
-                        return true;
+                    // In some cases, the pre-inputted text is not cleared.
+                    // Send empty text to the element.
+                    Bundle args = new Bundle();
+                    args.putCharSequence(AccessibilityNodeInfo.ACTION_ARGUMENT_SET_TEXT_CHARSEQUENCE, "");
+                    if (nodeInfo.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, args)) {
+                        Logger.debug("Sending text to ime" + textToSend);
+                        boolean success = ime.commitString(textToSend);
+                        if (success) {
+                            return true;
+                        }
                     }
+
                     Logger.debug("Fail to set text using ime");
                 } catch (Exception ige) {
                     Logger.error(ige);
