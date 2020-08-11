@@ -38,7 +38,8 @@ public enum Settings {
 
     //////////////////////// ADDED BY MO: add a setting value of AX_ROOT_RETRIEVAL_TIMEOUT, USE_DEVICE_REAL_SIZE /////////////////////////////////////
     AX_ROOT_RETRIEVAL_TIMEOUT(new AXRootRetrievalTimeout()),
-    USE_DEVICE_REAL_SIZE(new UseDeviceRealSize());
+    USE_DEVICE_REAL_SIZE(new UseDeviceRealSize()),
+    DONT_SUPPRESS_ACCESSIBILITY_SERVICES(new DontSupressAccessibilityServices());
     //END
 
 

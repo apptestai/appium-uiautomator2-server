@@ -23,9 +23,12 @@ import android.view.accessibility.AccessibilityNodeInfo;
 import androidx.test.uiautomator.Configurator;
 import androidx.test.uiautomator.UiDevice;
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
+import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.utils.Device;
 import io.appium.uiautomator2.utils.Logger;
 
+import static io.appium.uiautomator2.model.settings.Settings.ALLOW_INVISIBLE_ELEMENTS;
+import static io.appium.uiautomator2.model.settings.Settings.DONT_SUPPRESS_ACCESSIBILITY_SERVICES;
 import static io.appium.uiautomator2.utils.ReflectionUtils.invoke;
 import static io.appium.uiautomator2.utils.ReflectionUtils.method;
 
@@ -72,6 +75,15 @@ public class UiAutomatorBridge {
         // setting global WaitForIdleTimeout
         Configurator configurator = Configurator.getInstance();
         configurator.setWaitForIdleTimeout(Device.TOTAL_TIME_TO_WAIT_FOR_IDLE_STATE);
+
+        boolean dontSupressAccessibilityServices = AppiumUIA2Driver
+                .getInstance()
+                .getSessionOrThrow()
+                .getCapability(DONT_SUPPRESS_ACCESSIBILITY_SERVICES.toString(), false);
+
+        if (dontSupressAccessibilityServices) {
+            configurator.setUiAutomationFlags(UiAutomation.FLAG_DONT_SUPPRESS_ACCESSIBILITY_SERVICES);
+        }
 
         UiAutomation uiAutomation = this.getUiAutomation();
         AccessibilityServiceInfo serviceInfo = uiAutomation.getServiceInfo();
