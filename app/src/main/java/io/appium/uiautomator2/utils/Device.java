@@ -103,6 +103,7 @@ public abstract class Device {
         Logger.info(String.format("Waiting up to %sms for device to be idle", timeInMS));
         try {
             getUiDevice().waitForIdle(timeInMS);
+            Logger.debug("Done waiting");
         } catch (Exception e) {
             Logger.error(String.format("Unable wait %sms for AUT to idle", timeInMS));
         }

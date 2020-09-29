@@ -53,7 +53,8 @@ public enum Attribute {
     HASHCODE(new String[]{"hashcode"}), // AccessibilityNodeInfo#hashCode()
     EDITABLE(new String[]{"editable"}), // AccessibilityNodeInfo#isEditable()
     INPUTTYPE(new String[]{"input-type"}), //AccessibilityNodeInfo#getInputType()
-    HINT_TEXT(new String[]{"hint-text"}); //AccessibilityNodeInfo#getHintText()
+    HINT_TEXT(new String[]{"hint-text"}), //AccessibilityNodeInfo#getHintText()
+    BREAK_DUMP(new String[]{"break-dump"}, false, true); //AccessibilityNodeInfoHelpers#getVisibleBounds()
     //END
 
     private final String[] aliases;

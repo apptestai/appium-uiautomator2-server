@@ -17,6 +17,8 @@
 package io.appium.uiautomator2.model;
 
 import android.annotation.TargetApi;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.os.Build;
 import android.util.Range;
 import android.view.accessibility.AccessibilityNodeInfo;
@@ -31,11 +33,14 @@ import java.util.WeakHashMap;
 
 import androidx.annotation.Nullable;
 import io.appium.uiautomator2.core.AccessibilityNodeInfoHelpers;
+import io.appium.uiautomator2.model.settings.Settings;
+import io.appium.uiautomator2.model.settings.XMLDumpSkipUnboud;
 import io.appium.uiautomator2.utils.Attribute;
 import io.appium.uiautomator2.utils.Logger;
 
 import static androidx.test.internal.util.Checks.checkNotNull;
 import static io.appium.uiautomator2.model.settings.Settings.ALLOW_INVISIBLE_ELEMENTS;
+import static io.appium.uiautomator2.utils.Device.getDeviceSize;
 import static io.appium.uiautomator2.utils.ReflectionUtils.setField;
 import static io.appium.uiautomator2.utils.StringHelpers.charSequenceToNullableString;
 
@@ -53,6 +58,13 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
     private final List<UiAutomationElement> children;
     private int depth = 0;
 
+    // ADDED BY MO: to solve too many elements
+    private Rect screenBounds = null;
+    private boolean skipUnbound = false;
+    public static final String UNBOUNDS_VAL = "unbound";
+    public static final String MAX_DEPTH_VAL = "max depth";
+    // END
+
     /**
      * A snapshot of all attributes is taken at construction. The attributes of a
      * {@code UiAutomationElement} instance are immutable. If the underlying
@@ -61,6 +73,12 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
      */
     private UiAutomationElement(AccessibilityNodeInfo node, int index) {
         super(checkNotNull(node));
+
+        // ADDED BY MO: to solve too many elements
+        this.skipUnbound = ((XMLDumpSkipUnboud) Settings.XML_DUMP_SKIP_UNBOUND.getSetting()).getValue();
+        Point size = getDeviceSize();
+        this.screenBounds = new Rect(0, 0, size.x, size.y);
+        // END
 
         Map<Attribute, Object> attributes = new LinkedHashMap<>();
         // The same sequence will be used for node attributes in xml page source
@@ -100,8 +118,12 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
         }
         //END
 
+        // MODIFIED BY MO: to solve too many elements
+//        this.attributes = Collections.unmodifiableMap(attributes);
+//        this.children = buildChildren(node);
+        this.children = buildChildren(node, attributes);
         this.attributes = Collections.unmodifiableMap(attributes);
-        this.children = buildChildren(node);
+        // END
     }
 
     private UiAutomationElement(String hierarchyClassName, AccessibilityNodeInfo[] childNodes, int index) {
@@ -180,12 +202,49 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
         this.children.add(new UiAutomationElement(node, this.children.size()));
     }
 
-    private List<UiAutomationElement> buildChildren(AccessibilityNodeInfo node) {
+    // MODIFILED BY MO: to solve too many elements
+//    private List<UiAutomationElement> buildChildren(AccessibilityNodeInfo node) {
+//        final int childCount = node.getChildCount();
+//        if (childCount == 0 || getDepth() >= MAX_DEPTH) {
+//            if (getDepth() >= MAX_DEPTH) {
+//                Logger.warn(String.format("Skipping building children of '%s' because the maximum " +
+//                        "recursion depth (%s) has been reached", node, MAX_DEPTH));
+//            }
+//            return Collections.emptyList();
+//        }
+//
+//        List<UiAutomationElement> children = new ArrayList<>(childCount);
+//        boolean areInvisibleElementsAllowed = AppiumUIA2Driver
+//                .getInstance()
+//                .getSessionOrThrow()
+//                .getCapability(ALLOW_INVISIBLE_ELEMENTS.toString(), false);
+//        for (int i = 0; i < childCount; i++) {
+//            AccessibilityNodeInfo child = node.getChild(i);
+//            //Ignore if element is not visible on the screen
+//            if (child != null && (child.isVisibleToUser() || areInvisibleElementsAllowed)) {
+//                children.add(getOrCreateElement(child, i, getDepth() + 1));
+//            }
+//        }
+//        return children;
+//    }
+    private List<UiAutomationElement> buildChildren(AccessibilityNodeInfo node, Map<Attribute, Object> attributes) {
+        if (this.skipUnbound) {
+            Rect bounds = AccessibilityNodeInfoHelpers.getVisibleBounds(node);
+            if (this.screenBounds != null && bounds != null && !this.screenBounds.intersects(bounds.left, bounds.top, bounds.right, bounds.bottom)) {
+//                Logger.debug(String.format("skip unbound element %s", bounds.toShortString()));
+                this.put(attributes, Attribute.BREAK_DUMP, UiAutomationElement.UNBOUNDS_VAL);
+                return Collections.emptyList();
+            }
+        }
+
         final int childCount = node.getChildCount();
         if (childCount == 0 || getDepth() >= MAX_DEPTH) {
             if (getDepth() >= MAX_DEPTH) {
                 Logger.warn(String.format("Skipping building children of '%s' because the maximum " +
                         "recursion depth (%s) has been reached", node, MAX_DEPTH));
+                // ADDED BY MO: for debuging
+                this.put(attributes, Attribute.BREAK_DUMP, UiAutomationElement.MAX_DEPTH_VAL);
+                // END
             }
             return Collections.emptyList();
         }

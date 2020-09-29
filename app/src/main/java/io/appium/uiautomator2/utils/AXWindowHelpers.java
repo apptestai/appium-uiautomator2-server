@@ -74,6 +74,7 @@ public class AXWindowHelpers {
             try {
                 AccessibilityNodeInfo root = UiAutomatorBridge.getInstance().getAccessibilityRootNode();
                 if (root != null) {
+                    Logger.debug("find AXRoot Node");
                     return root;
                 }
             } catch (Exception e) {

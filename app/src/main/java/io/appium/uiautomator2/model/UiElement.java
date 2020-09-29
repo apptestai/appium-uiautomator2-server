@@ -16,6 +16,7 @@
 
 package io.appium.uiautomator2.model;
 
+import android.graphics.Rect;
 import android.view.accessibility.AccessibilityNodeInfo;
 
 import java.util.List;
@@ -164,6 +165,7 @@ public abstract class UiElement<R, E extends UiElement<R, E>> {
     public String getHintText() {
         return get(Attribute.HINT_TEXT);
     }
+    public Rect getBreakDump(){return get(Attribute.BREAK_DUMP, null);}
     //END
 
     protected abstract Map<Attribute, Object> getAttributes();

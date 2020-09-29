@@ -45,9 +45,11 @@ import androidx.annotation.Nullable;
 import io.appium.uiautomator2.common.exceptions.InvalidSelectorException;
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
 import io.appium.uiautomator2.model.NotificationListener;
+import io.appium.uiautomator2.model.UiAutomationElement;
 import io.appium.uiautomator2.model.UiElement;
 import io.appium.uiautomator2.model.settings.NormalizeTagNames;
 import io.appium.uiautomator2.model.settings.Settings;
+import io.appium.uiautomator2.model.settings.XMLDumpMaxSize;
 import io.appium.uiautomator2.utils.Attribute;
 import io.appium.uiautomator2.utils.Logger;
 import io.appium.uiautomator2.utils.NodeInfoList;
@@ -123,7 +125,44 @@ public class AccessibilityNodeInfoDumper {
         return fixedName;
     }
 
-    private void serializeUiElement(UiElement<?, ?> uiElement, final int depth) throws IOException {
+//    private void serializeUiElement(UiElement<?, ?> uiElement, final int depth) throws IOException {
+//        final String className = uiElement.getClassName();
+//        final String nodeName = toXmlNodeName(className);
+//        serializer.startTag(NAMESPACE, nodeName);
+//
+//        for (Attribute attr : uiElement.attributeKeys()) {
+//            if (!attr.isExposableToXml()) {
+//                continue;
+//            }
+//            Object value = uiElement.get(attr);
+//            if (value == null) {
+//                continue;
+//            }
+//            serializer.attribute(NAMESPACE, attr.getName(), toSafeString(String.valueOf(value), NON_XML_CHAR_REPLACEMENT));
+//        }
+//        if (shouldAddDisplayInfo) {
+//            addDisplayInfo();
+//            // Display info is only added once to the root node
+//            shouldAddDisplayInfo = false;
+//        }
+//
+//        if (uiElementsMapping != null) {
+//            final int uiElementIndex = uiElementsMapping.size();
+//            uiElementsMapping.put(uiElementIndex, uiElement);
+//            serializer.attribute(NAMESPACE, UI_ELEMENT_INDEX, Integer.toString(uiElementIndex));
+//        }
+//
+//        if (depth >= MAX_DEPTH) {
+//            Logger.error(String.format("The xml tree dump has reached its maximum depth of %s at " +
+//                    "'%s'. The recursion is stopped to avoid StackOverflowError", MAX_DEPTH, className));
+//        } else {
+//            for (UiElement<?, ?> child : uiElement.getChildren()) {
+//                serializeUiElement(child, depth + 1);
+//            }
+//        }
+//        serializer.endTag(NAMESPACE, nodeName);
+//    }
+    private void serializeUiElement(UiElement<?, ?> uiElement, final int depth, ByteArrayOutputStream outputStream, long optionMaxSize) throws IOException {
         final String className = uiElement.getClassName();
         final String nodeName = toXmlNodeName(className);
         serializer.startTag(NAMESPACE, nodeName);
@@ -149,20 +188,33 @@ public class AccessibilityNodeInfoDumper {
             uiElementsMapping.put(uiElementIndex, uiElement);
             serializer.attribute(NAMESPACE, UI_ELEMENT_INDEX, Integer.toString(uiElementIndex));
         }
-
         if (depth >= MAX_DEPTH) {
             Logger.error(String.format("The xml tree dump has reached its maximum depth of %s at " +
                     "'%s'. The recursion is stopped to avoid StackOverflowError", MAX_DEPTH, className));
+            if (uiElement.getBreakDump() == null) {
+                serializer.attribute(NAMESPACE, Attribute.BREAK_DUMP.getName(), UiAutomationElement.MAX_DEPTH_VAL);
+            }
+        } else if (outputStream.size() > optionMaxSize) {
+            Logger.error(String.format("The xml tree dump has reached its maximum data size of %s at " +
+                    "'%s'.", optionMaxSize, className));
+            if (uiElement.getBreakDump() == null) {
+                serializer.attribute(NAMESPACE, Attribute.BREAK_DUMP.getName(), UiAutomationElement.UNBOUNDS_VAL);
+            }
         } else {
             for (UiElement<?, ?> child : uiElement.getChildren()) {
-                serializeUiElement(child, depth + 1);
+                serializeUiElement(child, depth + 1, outputStream, optionMaxSize);
             }
         }
         serializer.endTag(NAMESPACE, nodeName);
     }
+    // END
 
     private InputStream toStream() throws IOException {
         final long startTime = SystemClock.uptimeMillis();
+
+        // ADDED BY MO: to solve too many elements
+        final long maxSize = ((XMLDumpMaxSize)Settings.XML_DUMP_MAX_SIZE.getSetting()).getValue();
+        // END
         try (ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
             serializer = Xml.newSerializer();
             shouldAddDisplayInfo = root == null;
@@ -172,7 +224,10 @@ public class AccessibilityNodeInfoDumper {
             final UiElement<?, ?> xpathRoot = root == null
                     ? rebuildForNewRoots(getCachedWindowRoots(), NotificationListener.getInstance().getToastMessage())
                     : rebuildForNewRoots(new AccessibilityNodeInfo[]{root});
-            serializeUiElement(xpathRoot, 0);
+            // MODIFIED BY MO: to solve too many elements
+            //serializeUiElement(xpathRoot, 0);
+            serializeUiElement(xpathRoot, 0, outputStream, maxSize);
+            // END
             serializer.endDocument();
             Logger.debug(String.format("The source XML tree (%s bytes) has been fetched in %sms",
                     outputStream.size(), SystemClock.uptimeMillis() - startTime));
