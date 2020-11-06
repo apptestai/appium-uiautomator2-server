@@ -19,20 +19,18 @@ package io.appium.uiautomator2.handler;
 import android.app.Instrumentation;
 import android.util.Base64;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.nio.charset.StandardCharsets;
 
 import io.appium.uiautomator2.common.exceptions.InvalidArgumentException;
 import io.appium.uiautomator2.handler.request.SafeRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
+import io.appium.uiautomator2.model.api.SetClipboardModel;
 import io.appium.uiautomator2.utils.ClipboardHelper;
 import io.appium.uiautomator2.utils.ClipboardHelper.ClipDataType;
-import io.appium.uiautomator2.utils.Logger;
 
 import static androidx.test.platform.app.InstrumentationRegistry.getInstrumentation;
+import static io.appium.uiautomator2.utils.ModelUtils.toModel;
 
 public class SetClipboard extends SafeRequestHandler {
     private final Instrumentation mInstrumentation = getInstrumentation();
@@ -46,24 +44,15 @@ public class SetClipboard extends SafeRequestHandler {
     }
 
     @Override
-    protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException {
-        Logger.info("Set Clipboard command");
-        final String content;
+    protected AppiumResponse safeHandle(IHttpRequest request) {
+        SetClipboardModel model = toModel(request, SetClipboardModel.class);
+        String content = fromBase64String(model.content);
         ClipDataType contentType = ClipDataType.PLAINTEXT;
-        String label = null;
-        JSONObject payload = toJSON(request);
         try {
-            content = fromBase64String(payload.getString("content"));
-            if (payload.has("contentType")) {
-                contentType = ClipDataType.valueOf(payload
-                        .getString("contentType")
-                        .toUpperCase());
+            if (model.contentType != null) {
+                contentType = ClipDataType.valueOf(model.contentType.toUpperCase());
             }
-            if (payload.has("label")) {
-                label = payload.getString("label");
-            }
-
-            mInstrumentation.runOnMainSync(new AppiumSetClipboardRunnable(contentType, label, content));
+            mInstrumentation.runOnMainSync(new AppiumSetClipboardRunnable(contentType, model.label, content));
         } catch (IllegalArgumentException e) {
             throw new InvalidArgumentException(
                     String.format("Only '%s' content types are supported. '%s' is given instead",
@@ -75,9 +64,9 @@ public class SetClipboard extends SafeRequestHandler {
 
     // Clip feature should run with main thread
     private class AppiumSetClipboardRunnable implements Runnable {
-        private ClipDataType contentType;
-        private String label;
-        private String content;
+        private final ClipDataType contentType;
+        private final String label;
+        private final String content;
 
         AppiumSetClipboardRunnable(ClipDataType contentType, String label, String content) {
             this.contentType = contentType;
@@ -87,13 +76,10 @@ public class SetClipboard extends SafeRequestHandler {
 
         @Override
         public void run() {
-            switch (contentType) {
-                case PLAINTEXT:
-                    new ClipboardHelper(mInstrumentation.getTargetContext()).setTextData(label, content);
-                    break;
-                default:
-                    throw new IllegalArgumentException();
+            if (contentType != ClipDataType.PLAINTEXT) {
+                throw new IllegalArgumentException();
             }
+            new ClipboardHelper(mInstrumentation.getTargetContext()).setTextData(label, content);
         }
     }
 }

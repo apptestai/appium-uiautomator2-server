@@ -19,8 +19,7 @@ package io.appium.uiautomator2.handler;
 import io.appium.uiautomator2.handler.request.SafeRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
-import org.json.JSONException;
-import org.json.JSONObject;
+import io.appium.uiautomator2.model.api.StatusModel;
 
 import static io.appium.uiautomator2.model.Session.NO_ID;
 
@@ -31,10 +30,9 @@ public class Status extends SafeRequestHandler {
     }
 
     @Override
-    protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException {
-        JSONObject status = new JSONObject();
-        status.put("ready", true);
-        status.put("message", "UiAutomator2 Server is ready to accept commands");
-        return new AppiumResponse(NO_ID, status);
+    protected AppiumResponse safeHandle(IHttpRequest request) {
+        return new AppiumResponse(NO_ID, new StatusModel(true,
+                "UiAutomator2 Server is ready to accept commands"
+        ));
     }
 }

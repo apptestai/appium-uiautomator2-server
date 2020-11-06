@@ -20,12 +20,6 @@ import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiSelector;
 
-import io.appium.uiautomator2.common.exceptions.NotImplementedException;
-import org.apache.commons.lang.StringUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -34,7 +28,7 @@ import java.util.regex.Pattern;
 
 import io.appium.uiautomator2.common.exceptions.ElementNotFoundException;
 import io.appium.uiautomator2.common.exceptions.InvalidSelectorException;
-import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
+import io.appium.uiautomator2.common.exceptions.NotImplementedException;
 import io.appium.uiautomator2.handler.request.SafeRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
@@ -43,8 +37,9 @@ import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.model.By;
 import io.appium.uiautomator2.model.By.ById;
 import io.appium.uiautomator2.model.Session;
+import io.appium.uiautomator2.model.api.FindElementModel;
 import io.appium.uiautomator2.model.internal.CustomUiDevice;
-import io.appium.uiautomator2.model.internal.NativeAndroidBySelector;
+import io.appium.uiautomator2.model.internal.ElementsLookupStrategy;
 import io.appium.uiautomator2.utils.ElementHelpers;
 import io.appium.uiautomator2.utils.Logger;
 import io.appium.uiautomator2.utils.NodeInfoList;
@@ -55,6 +50,8 @@ import static io.appium.uiautomator2.utils.Device.getUiDevice;
 import static io.appium.uiautomator2.utils.ElementLocationHelpers.getXPathNodeMatch;
 import static io.appium.uiautomator2.utils.ElementLocationHelpers.rewriteIdLocator;
 import static io.appium.uiautomator2.utils.ElementLocationHelpers.toSelectors;
+import static io.appium.uiautomator2.utils.ModelUtils.toModel;
+import static io.appium.uiautomator2.utils.StringHelpers.isBlank;
 
 public class FindElements extends SafeRequestHandler {
 
@@ -65,45 +62,41 @@ public class FindElements extends SafeRequestHandler {
     }
 
     @Override
-    protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException, UiObjectNotFoundException {
-        JSONArray result = new JSONArray();
-        JSONObject payload = toJSON(request);
-        String method = payload.getString("strategy");
-        String selector = payload.getString("selector");
-        final String contextId = payload.getString("context");
+    protected AppiumResponse safeHandle(IHttpRequest request) throws UiObjectNotFoundException {
+        List<Object> result = new ArrayList<>();
+        FindElementModel model = toModel(request, FindElementModel.class);
+        final String method = model.strategy;
+        final String selector = model.selector;
+        final String contextId = model.context;
+        if (contextId == null) {
+            Logger.info(String.format("method: '%s', selector: '%s'", method, selector));
+        } else {
+            Logger.info(String.format("method: '%s', selector: '%s', contextId: '%s'",
+                    method, selector, contextId));
+        }
 
-        Logger.info(String.format("Find elements command using '%s' with selector '%s'.", method, selector));
+        final By by = ElementsLookupStrategy.ofName(method).toNativeSelector(selector);
 
-        By by = new NativeAndroidBySelector().pickFrom(method, selector);
-
-        final List<Object> elements;
+        final List<?> elements;
         try {
-            elements = StringUtils.isBlank(contextId)
-                    ? this.findElements(by)
-                    : this.findElements(by, contextId);
+            elements = isBlank(contextId) ? this.findElements(by) : this.findElements(by, contextId);
 
             Session session = AppiumUIA2Driver.getInstance().getSessionOrThrow();
             for (Object element : elements) {
                 String id = UUID.randomUUID().toString();
                 AndroidElement androidElement = getAndroidElement(id, element, false, by, contextId);
                 session.getKnownElements().add(androidElement);
-                JSONObject jsonElement = ElementHelpers.toJSON(androidElement);
-                result.put(jsonElement);
+                result.add(androidElement.toModel());
             }
             return new AppiumResponse(getSessionId(request), result);
         } catch (ElementNotFoundException ignored) {
-            /* For findElements up on no Element. instead of throwing exception unlike in findElement,
-               empty array should be return. for more info refer:
-               https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidelements
-              */
+            // Return an empty array:
+            // https://github.com/SeleniumHQ/selenium/wiki/JsonWireProtocol#sessionsessionidelements
             return new AppiumResponse(getSessionId(request), result);
-        } catch (ClassNotFoundException e) {
-            throw new UiAutomator2Exception(e);
         }
     }
 
-    private List<Object> findElements(By by) throws ClassNotFoundException,
-            UiAutomator2Exception, UiObjectNotFoundException {
+    private List<Object> findElements(By by) throws UiObjectNotFoundException {
         refreshAccessibilityCache();
 
         if (by instanceof By.ById) {
@@ -128,8 +121,7 @@ public class FindElements extends SafeRequestHandler {
         throw new NotImplementedException(msg);
     }
 
-    private List<Object> findElements(By by, String contextId) throws ClassNotFoundException,
-            UiAutomator2Exception, UiObjectNotFoundException {
+    private List<?> findElements(By by, String contextId) throws UiObjectNotFoundException {
         Session session = AppiumUIA2Driver.getInstance().getSessionOrThrow();
         AndroidElement element = session.getKnownElements().getElementFromCache(contextId);
         if (element == null) {
@@ -159,7 +151,7 @@ public class FindElements extends SafeRequestHandler {
      * returns  List<UiObject> using '-android automator' expression
      **/
     private List<Object> getUiObjectsUsingAutomator(List<UiSelector> selectors, String contextId)
-            throws InvalidSelectorException, ClassNotFoundException {
+            throws InvalidSelectorException {
         List<Object> foundElements = new ArrayList<>();
         for (final UiSelector sel : selectors) {
             // With multiple selectors, we expect that some elements may not
@@ -180,7 +172,7 @@ public class FindElements extends SafeRequestHandler {
      * finds elements with given UiSelector return List<UiObject
      */
     private List<Object> fetchElements(UiSelector sel, String key)
-            throws UiObjectNotFoundException, ClassNotFoundException, InvalidSelectorException {
+            throws UiObjectNotFoundException, InvalidSelectorException {
         //TODO: finding elements with contextId yet to implement
         boolean keepSearching = true;
         final String selectorString = sel.toString();

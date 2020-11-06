@@ -18,10 +18,11 @@ package io.appium.uiautomator2.model;
 
 import android.view.accessibility.AccessibilityEvent;
 
+import androidx.annotation.NonNull;
+
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import androidx.annotation.NonNull;
 import io.appium.uiautomator2.core.UiAutomation;
 import io.appium.uiautomator2.utils.Logger;
 
@@ -33,7 +34,7 @@ public class NotificationListener implements OnAccessibilityEventListener {
     private static final int TOAST_CLEAR_TIMEOUT = 3500;
 
     private final UiAutomation uiAutomation;
-    private List<CharSequence> toastMessage = new CopyOnWriteArrayList<>();
+    private final List<CharSequence> toastMessage = new CopyOnWriteArrayList<>();
     private long recentToastTimestamp = currentTimeMillis();
     private OnAccessibilityEventListener originalListener = null;
     private volatile boolean isListening;
@@ -100,7 +101,7 @@ public class NotificationListener implements OnAccessibilityEventListener {
     @NonNull
     public List<CharSequence> getToastMessage() {
         if (!toastMessage.isEmpty() && currentTimeMillis() - recentToastTimestamp > getToastClearTimeout()) {
-            Logger.debug("Clearing toast message: " + toastMessage);
+            Logger.info("Clearing toast message: " + toastMessage);
             toastMessage.clear();
         }
         return toastMessage;

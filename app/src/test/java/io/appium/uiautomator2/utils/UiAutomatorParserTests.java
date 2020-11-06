@@ -16,6 +16,9 @@
 
 package io.appium.uiautomator2.utils;
 
+import androidx.test.uiautomator.UiObjectNotFoundException;
+import androidx.test.uiautomator.UiSelector;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,8 +27,6 @@ import org.junit.rules.ExpectedException;
 import java.util.Arrays;
 import java.util.List;
 
-import androidx.test.uiautomator.UiObjectNotFoundException;
-import androidx.test.uiautomator.UiSelector;
 import io.appium.uiautomator2.common.exceptions.UiSelectorSyntaxException;
 
 import static org.junit.Assert.assertEquals;
@@ -41,10 +42,10 @@ public class UiAutomatorParserTests {
     public ExpectedException expectedException = ExpectedException.none();
 
     private UiAutomatorParser uiAutomatorParser;
-    private UiScrollableParser uiScrollableParser = mock(UiScrollableParser.class);
-    private UiSelectorParser uiSelectorParser = mock(UiSelectorParser.class);
-    private UiSelector scrollableSelector = new UiSelector().text("scroll");
-    private UiSelector selector = new UiSelector().text("selector");
+    private final UiScrollableParser uiScrollableParser = mock(UiScrollableParser.class);
+    private final UiSelectorParser uiSelectorParser = mock(UiSelectorParser.class);
+    private final UiSelector scrollableSelector = new UiSelector().text("scroll");
+    private final UiSelector selector = new UiSelector().text("selector");
 
     @Before
     public void setUp() throws UiSelectorSyntaxException, UiObjectNotFoundException {

@@ -20,6 +20,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 public class StringHelpers {
+    public static String abbreviate(@Nullable String str, int maxLen) {
+        if (str == null) {
+            return null;
+        }
+        if (maxLen >= str.length()) {
+            return str;
+        }
+
+        return str.substring(0, maxLen) + "\u2026";
+    }
+
+    public static boolean isBlank(@Nullable String str) {
+        return str == null || str.trim().length() == 0;
+    }
+
     @Nullable
     public static String charSequenceToNullableString(@Nullable CharSequence input) {
         return charSequenceToString(input, false);

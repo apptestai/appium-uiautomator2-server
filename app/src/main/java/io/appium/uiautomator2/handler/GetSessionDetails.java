@@ -16,15 +16,13 @@
 
 package io.appium.uiautomator2.handler;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import io.appium.uiautomator2.handler.request.SafeRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.model.AccessibilityScrollData;
 import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.model.Session;
+import io.appium.uiautomator2.model.api.SessionDetailsModel;
 
 public class GetSessionDetails extends SafeRequestHandler {
     public GetSessionDetails(String mappedUri) {
@@ -32,15 +30,11 @@ public class GetSessionDetails extends SafeRequestHandler {
     }
 
     @Override
-    protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException {
+    protected AppiumResponse safeHandle(IHttpRequest request) {
         Session session = AppiumUIA2Driver.getInstance().getSession();
-        JSONObject result = new JSONObject();
-        if (session != null) {
-            AccessibilityScrollData scrollData = session.getLastScrollData();
-            if (scrollData != null) {
-                result.put("lastScrollData", new JSONObject(scrollData.getAsMap()));
-            }
-        }
-        return new AppiumResponse(getSessionId(request), result);
+        AccessibilityScrollData scrollData = session == null ? null : session.getLastScrollData();
+        return new AppiumResponse(getSessionId(request), new SessionDetailsModel(
+                scrollData == null ? null : scrollData.getAsMap()
+        ));
     }
 }

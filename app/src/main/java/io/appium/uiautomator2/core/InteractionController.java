@@ -19,15 +19,12 @@ import android.view.InputEvent;
 import android.view.MotionEvent.PointerCoords;
 
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
-
-import io.appium.uiautomator2.model.AppiumUIA2Driver;
-import io.appium.uiautomator2.model.Session;
 import io.appium.uiautomator2.model.settings.Settings;
 import io.appium.uiautomator2.model.settings.TrackScrollEvents;
 import io.appium.uiautomator2.utils.Logger;
 
 import static io.appium.uiautomator2.utils.ReflectionUtils.invoke;
-import static io.appium.uiautomator2.utils.ReflectionUtils.method;
+import static io.appium.uiautomator2.utils.ReflectionUtils.getMethod;
 
 public class InteractionController {
 
@@ -38,6 +35,7 @@ public class InteractionController {
     private static final String METHOD_TOUCH_DOWN = "touchDown";
     private static final String METHOD_TOUCH_UP = "touchUp";
     private static final String METHOD_TOUCH_MOVE = "touchMove";
+    private static final String METHOD_CLICK_NO_SYNC = "clickNoSync";
     private final Object interactionController;
 
     public InteractionController(Object interactionController) {
@@ -45,19 +43,19 @@ public class InteractionController {
     }
 
     public boolean sendKey(int keyCode, int metaState) throws UiAutomator2Exception {
-        return (Boolean) invoke(method(CLASS_INTERACTION_CONTROLLER, METHOD_SEND_KEY, int.class, int.class),
+        return (Boolean) invoke(getMethod(CLASS_INTERACTION_CONTROLLER, METHOD_SEND_KEY, int.class, int.class),
                 interactionController, keyCode, metaState);
     }
 
     public boolean injectEventSync(final InputEvent event, boolean shouldRegister) throws UiAutomator2Exception {
         if (!shouldRegister) {
-            return (Boolean) invoke(method(CLASS_INTERACTION_CONTROLLER,
+            return (Boolean) invoke(getMethod(CLASS_INTERACTION_CONTROLLER,
                     METHOD_INJECT_EVENT_SYNC, InputEvent.class), interactionController, event);
         }
         return EventRegister.runAndRegisterScrollEvents(new ReturningRunnable<Boolean>() {
             @Override
             public void run() {
-                Boolean result = (Boolean) invoke(method(CLASS_INTERACTION_CONTROLLER,
+                Boolean result = (Boolean) invoke(getMethod(CLASS_INTERACTION_CONTROLLER,
                         METHOD_INJECT_EVENT_SYNC, InputEvent.class), interactionController, event);
                 setResult(result);
             }
@@ -69,7 +67,6 @@ public class InteractionController {
     }
 
     public boolean shouldTrackScrollEvents() {
-        Session session = AppiumUIA2Driver.getInstance().getSessionOrThrow();
         final TrackScrollEvents trackScrollEventsSetting =
                 (TrackScrollEvents) Settings.TRACK_SCROLL_EVENTS.getSetting();
         Boolean trackScrollEvents = trackScrollEventsSetting.getValue();
@@ -80,7 +77,7 @@ public class InteractionController {
     }
 
     private boolean doTouchDown(final int x, final int y) {
-        return (Boolean) invoke(method(CLASS_INTERACTION_CONTROLLER,
+        return (Boolean) invoke(getMethod(CLASS_INTERACTION_CONTROLLER,
                 METHOD_TOUCH_DOWN, int.class, int.class), interactionController, x, y);
     }
 
@@ -96,7 +93,7 @@ public class InteractionController {
     }
 
     private boolean doTouchUp(final int x, final int y) {
-        return (Boolean) invoke(method(CLASS_INTERACTION_CONTROLLER, METHOD_TOUCH_UP,
+        return (Boolean) invoke(getMethod(CLASS_INTERACTION_CONTROLLER, METHOD_TOUCH_UP,
                 int.class, int.class), interactionController, x, y);
     }
 
@@ -112,7 +109,7 @@ public class InteractionController {
     }
 
     private boolean doTouchMove(final int x, final int y) {
-        return (Boolean) invoke(method(CLASS_INTERACTION_CONTROLLER,
+        return (Boolean) invoke(getMethod(CLASS_INTERACTION_CONTROLLER,
                 METHOD_TOUCH_MOVE, int.class, int.class), interactionController, x, y);
     }
 
@@ -128,9 +125,14 @@ public class InteractionController {
     }
 
     private boolean doPerformMultiPointerGesture(final PointerCoords[][] pcs) {
-        return (Boolean) invoke(method(CLASS_INTERACTION_CONTROLLER,
+        return (Boolean) invoke(getMethod(CLASS_INTERACTION_CONTROLLER,
                 METHOD_PERFORM_MULTI_POINTER_GESTURE, PointerCoords[][].class),
                 interactionController, (Object) pcs);
+    }
+
+    public boolean clickNoSync(int x, int y) {
+        return (Boolean) invoke(getMethod(CLASS_INTERACTION_CONTROLLER,
+                METHOD_CLICK_NO_SYNC, int.class, int.class), interactionController, x, y);
     }
 
     public Boolean performMultiPointerGesture(final PointerCoords[][] pcs) throws UiAutomator2Exception {

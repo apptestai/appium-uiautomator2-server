@@ -16,8 +16,6 @@
 
 package io.appium.uiautomator2.handler;
 
-import io.appium.uiautomator2.handler.request.BaseRequestHandler;
-import io.netty.handler.codec.http.HttpResponseStatus;
 import org.json.JSONException;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,10 +31,12 @@ import java.util.HashMap;
 
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
 import io.appium.uiautomator2.common.exceptions.UnsupportedSettingException;
+import io.appium.uiautomator2.handler.request.BaseRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.model.Session;
+import io.appium.uiautomator2.model.api.SettingsModel;
 import io.appium.uiautomator2.model.settings.AbstractSetting;
 import io.appium.uiautomator2.model.settings.ActionAcknowledgmentTimeout;
 import io.appium.uiautomator2.model.settings.AllowInvisibleElements;
@@ -44,12 +44,19 @@ import io.appium.uiautomator2.model.settings.CompressedLayoutHierarchy;
 import io.appium.uiautomator2.model.settings.ElementResponseAttributes;
 import io.appium.uiautomator2.model.settings.EnableNotificationListener;
 import io.appium.uiautomator2.model.settings.KeyInjectionDelay;
+import io.appium.uiautomator2.model.settings.MjpegBilinearFiltering;
+import io.appium.uiautomator2.model.settings.MjpegScalingFactor;
+import io.appium.uiautomator2.model.settings.MjpegServerFramerate;
+import io.appium.uiautomator2.model.settings.MjpegServerPort;
+import io.appium.uiautomator2.model.settings.MjpegServerScreenshotQuality;
 import io.appium.uiautomator2.model.settings.ScrollAcknowledgmentTimeout;
+import io.appium.uiautomator2.model.settings.ServerPort;
 import io.appium.uiautomator2.model.settings.Settings;
 import io.appium.uiautomator2.model.settings.ShouldUseCompactResponses;
 import io.appium.uiautomator2.model.settings.ShutdownOnPowerDisconnect;
 import io.appium.uiautomator2.model.settings.WaitForIdleTimeout;
 import io.appium.uiautomator2.model.settings.WaitForSelectorTimeout;
+import io.netty.handler.codec.http.HttpResponseStatus;
 
 import static io.appium.uiautomator2.model.settings.Settings.ACTION_ACKNOWLEDGMENT_TIMEOUT;
 import static io.appium.uiautomator2.model.settings.Settings.ALLOW_INVISIBLE_ELEMENTS;
@@ -57,12 +64,20 @@ import static io.appium.uiautomator2.model.settings.Settings.COMPRESSED_LAYOUT_H
 import static io.appium.uiautomator2.model.settings.Settings.ELEMENT_RESPONSE_ATTRIBUTES;
 import static io.appium.uiautomator2.model.settings.Settings.ENABLE_NOTIFICATION_LISTENER;
 import static io.appium.uiautomator2.model.settings.Settings.KEY_INJECTION_DELAY;
+import static io.appium.uiautomator2.model.settings.Settings.MJPEG_BILINEAR_FILTERING;
+import static io.appium.uiautomator2.model.settings.Settings.MJPEG_SCALING_FACTOR;
+import static io.appium.uiautomator2.model.settings.Settings.MJPEG_SERVER_FRAMERATE;
+import static io.appium.uiautomator2.model.settings.Settings.MJPEG_SERVER_PORT;
+import static io.appium.uiautomator2.model.settings.Settings.MJPEG_SERVER_SCREENSHOT_QUALITY;
 import static io.appium.uiautomator2.model.settings.Settings.SCROLL_ACKNOWLEDGMENT_TIMEOUT;
+import static io.appium.uiautomator2.model.settings.Settings.SERVER_PORT;
 import static io.appium.uiautomator2.model.settings.Settings.SHOULD_USE_COMPACT_RESPONSES;
 import static io.appium.uiautomator2.model.settings.Settings.SHUTDOWN_ON_POWER_DISCONNECT;
 import static io.appium.uiautomator2.model.settings.Settings.WAIT_FOR_IDLE_TIMEOUT;
 import static io.appium.uiautomator2.model.settings.Settings.WAIT_FOR_SELECTOR_TIMEOUT;
-import static org.hamcrest.CoreMatchers.*;
+import static io.appium.uiautomator2.utils.ModelUtils.toJsonString;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
@@ -81,7 +96,7 @@ public class UpdateSettingsTests {
     private Session session;
 
     @Spy
-    private UpdateSettings updateSettings = new UpdateSettings("my_uri");
+    private final UpdateSettings updateSettings = new UpdateSettings("my_uri");
 
     @Mock
     private AbstractSetting mySetting;
@@ -159,6 +174,44 @@ public class UpdateSettingsTests {
         verifySettingIsAvailable(SHUTDOWN_ON_POWER_DISCONNECT, ShutdownOnPowerDisconnect.class);
     }
 
+    @Test
+    public void shouldBeAbleToReturnServerPortSetting() {
+        verifySettingIsAvailable(SERVER_PORT, ServerPort.class);
+    }
+
+    @Test
+    public void shouldBeAbleToReturnMjpegServerPortSetting() {
+        verifySettingIsAvailable(MJPEG_SERVER_PORT, MjpegServerPort.class);
+    }
+
+    @Test
+    public void shouldBeAbleToReturnMjpegServerFramerateSetting() {
+        verifySettingIsAvailable(
+            MJPEG_SERVER_FRAMERATE,
+            MjpegServerFramerate.class);
+    }
+
+    @Test
+    public void shouldBeAbleToReturnMjpegScalingFactorSetting() {
+        verifySettingIsAvailable(
+            MJPEG_SCALING_FACTOR,
+            MjpegScalingFactor.class);
+    }
+
+    @Test
+    public void shouldBeAbleToReturnMjpeqServerScreenshotQualitySetting() {
+        verifySettingIsAvailable(
+            MJPEG_SERVER_SCREENSHOT_QUALITY,
+            MjpegServerScreenshotQuality.class);
+    }
+
+    @Test
+    public void shouldBeAbleToReturnMjpegBilinearFilteringSetting() {
+        verifySettingIsAvailable(
+            MJPEG_BILINEAR_FILTERING,
+            MjpegBilinearFiltering.class);
+    }
+
     @Test(expected=UnsupportedSettingException.class)
     public void shouldThrowExceptionIfSettingIsNotSupported() {
         updateSettings.getSetting("unsupported_setting");
@@ -167,6 +220,8 @@ public class UpdateSettingsTests {
     @SuppressWarnings("ConstantConditions")
     @Test
     public void shouldBeAbleToUpdateSetting() {
+        when(req.body())
+                .thenReturn(toJsonString(new SettingsModel(SETTING_NAME, SETTING_VALUE)));
         AppiumResponse response = updateSettings.handle(req);
         verify(mySetting).update(SETTING_VALUE);
         assertEquals(session.getCapability(SETTING_NAME), SETTING_VALUE);

@@ -16,6 +16,8 @@
 
 package io.appium.uiautomator2.model.settings;
 
+import androidx.test.uiautomator.Configurator;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,8 +27,6 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import androidx.test.uiautomator.Configurator;
-
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -34,7 +34,6 @@ import static org.mockito.Mockito.when;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Configurator.class})
 public class ScrollAcknowledgmentTimeoutTests {
-
     private ScrollAcknowledgmentTimeout scrollAcknowledgmentTimeout;
 
     @Mock
@@ -60,13 +59,13 @@ public class ScrollAcknowledgmentTimeoutTests {
 
     @Test
     public void shouldBeAbleToSetScrollAcknowledgmentTimeout() {
-        scrollAcknowledgmentTimeout.update(123);
-        verify(configurator).setScrollAcknowledgmentTimeout(123);
+        scrollAcknowledgmentTimeout.update(123L);
+        verify(configurator).setScrollAcknowledgmentTimeout(123L);
     }
 
     @Test
     public void shouldBeAbleToGetScrollAcknowledgmentTimeout() {
-        when(configurator.getScrollAcknowledgmentTimeout()).thenReturn((long) 123);
+        when(configurator.getScrollAcknowledgmentTimeout()).thenReturn(123L);
         Assert.assertEquals(Long.valueOf(123), scrollAcknowledgmentTimeout.getValue());
     }
 }

@@ -1,9 +1,10 @@
 package io.appium.uiautomator2.handler;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import androidx.annotation.VisibleForTesting;
+
+import java.util.HashMap;
+import java.util.Map;
+
 import io.appium.uiautomator2.handler.request.SafeRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
@@ -21,16 +22,17 @@ public class GetSettings extends SafeRequestHandler {
     }
 
     @Override
-    protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException {
+    protected AppiumResponse safeHandle(IHttpRequest request) {
         Logger.debug("Get settings:");
         return new AppiumResponse(getSessionId(request), getPayload());
     }
 
     @VisibleForTesting
-    public JSONObject getPayload() throws JSONException {
-        final JSONObject result = new JSONObject();
+    public Map<String, Object> getPayload() {
+        Map<String, Object> result = new HashMap<>();
         for (Settings value : Settings.values()) {
             try {
+                @SuppressWarnings("rawtypes")
                 ISetting setting = value.getSetting();
                 result.put(setting.getName(), setting.getValue());
             } catch (IllegalArgumentException e) {

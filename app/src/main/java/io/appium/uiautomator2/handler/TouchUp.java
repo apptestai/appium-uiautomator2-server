@@ -16,24 +16,21 @@
 
 package io.appium.uiautomator2.handler;
 
-import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
-import io.appium.uiautomator2.core.UiAutomatorBridge;
-import io.appium.uiautomator2.utils.Logger;
+import io.appium.uiautomator2.common.exceptions.InvalidElementStateException;
 
-public class TouchUp extends TouchEvent {
+public class TouchUp extends BaseTouchAction {
 
     public TouchUp(String mappedUri) {
         super(mappedUri);
     }
 
     @Override
-    public boolean executeTouchEvent() throws UiAutomator2Exception {
-        printEventDebugLine("TouchUp");
-        try {
-            return UiAutomatorBridge.getInstance().getInteractionController().touchUp(clickX, clickY);
-        } catch (Exception e) {
-            Logger.error("Problem invoking touchUp: " + e);
-            return false;
+    protected void executeEvent() {
+        printEventDebugLine();
+
+        if (!getIc().touchUp(clickX, clickY)) {
+            throw new InvalidElementStateException(
+                    String.format("Cannot perform %s action at (%s, %s)", getName(), clickX, clickY));
         }
     }
 }

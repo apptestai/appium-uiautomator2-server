@@ -16,10 +16,6 @@
 
 package io.appium.uiautomator2.handler;
 
-import org.apache.commons.lang.StringUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import androidx.test.uiautomator.UiObjectNotFoundException;
 
 import io.appium.uiautomator2.common.exceptions.ElementNotFoundException;
@@ -30,11 +26,14 @@ import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.model.AndroidElement;
 import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.model.Session;
+import io.appium.uiautomator2.model.api.SendKeysModel;
 import io.appium.uiautomator2.utils.Logger;
 
+import static android.text.TextUtils.isEmpty;
 import static androidx.test.uiautomator.By.focused;
 import static io.appium.uiautomator2.utils.Device.getUiDevice;
 import static io.appium.uiautomator2.utils.ElementHelpers.findElement;
+import static io.appium.uiautomator2.utils.ModelUtils.toModel;
 
 /**
  * Send keys to a given element.
@@ -45,9 +44,60 @@ public class SendKeysToElement extends SafeRequestHandler {
         super(mappedUri);
     }
 
+    private static boolean setProgress(AndroidElement element, SendKeysModel model) {
+        if (!element.canSetProgress()) {
+            return false;
+        }
+
+        float value;
+        try {
+            value = Float.parseFloat(model.text);
+        } catch (NumberFormatException | NullPointerException e) {
+            throw new IllegalArgumentException(String.format("Cannot convert '%s' to float", model.text));
+        }
+        Logger.info(String.format("Setting the progress value to %s", value));
+        element.setProgress(value);
+        return true;
+    }
+
+    private static void setText(AndroidElement element, SendKeysModel model) throws UiObjectNotFoundException {
+        String text = model.text;
+        boolean replace = model.replace == null ? false : model.replace;
+
+        boolean pressEnter = false;
+        if (text.endsWith("\\n")) {
+            pressEnter = true;
+            text = text.replace("\\n", "");
+            Logger.debug("Will press Enter after setting text");
+        }
+
+        if (!replace) {
+            String currentText = element.getText();
+            if (!isEmpty(currentText)) {
+                element.clear();
+                if (!isEmpty(element.getText())) {
+                    // clear could have failed, or we could have a hint in the field
+                    // we'll assume it is the latter
+                    Logger.debug("Could not clear the text. Assuming the remainder is a hint text.");
+                    currentText = "";
+                }
+                text = currentText + text;
+            }
+        }
+        if (!element.setText(text)) {
+            throw new InvalidElementStateException(String.format("Cannot set the element to '%s'. " +
+                    "Did you interact with the correct element?", model.text));
+        }
+
+        if (pressEnter) {
+            Logger.debug(getUiDevice().pressEnter()
+                    ? "Sent Enter key to the device"
+                    : "Could not send Enter key to the device");
+        }
+    }
+
     @Override
-    protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException, UiObjectNotFoundException {
-        Logger.info("send keys to element command");
+    protected AppiumResponse safeHandle(IHttpRequest request) throws UiObjectNotFoundException {
         String elementId = getElementId(request);
         AndroidElement element;
         if (elementId != null) {
@@ -60,40 +110,13 @@ public class SendKeysToElement extends SafeRequestHandler {
             //perform action on focused element
             element = findElement(focused(true));
         }
-        JSONObject payload = toJSON(request);
-        boolean replace = Boolean.parseBoolean(payload.getString("replace"));
-        String text = payload.getString("text");
+        SendKeysModel model = toModel(request, SendKeysModel.class);
 
-        boolean pressEnter = false;
-        if (text.endsWith("\\n")) {
-            pressEnter = true;
-            text = text.replace("\\n", "");
-            Logger.debug("Will press Enter after setting text");
+        if (setProgress(element, model)) {
+            return new AppiumResponse(getSessionId(request));
         }
 
-        if (!replace) {
-            String currentText = element.getText();
-            if (!StringUtils.isEmpty(currentText)) {
-                element.clear();
-                if (!StringUtils.isEmpty(element.getText())) {
-                    // clear could have failed, or we could have a hint in the field
-                    // we'll assume it is the latter
-                    Logger.debug("Could not clear the text. Assuming the remainder is a hint text.");
-                    currentText = "";
-                }
-                text = currentText + text;
-            }
-        }
-        if (!element.setText(text)) {
-            throw new InvalidElementStateException(String.format("Cannot set the element to '%s'. " +
-                    "Did you interact with the correct element?", text));
-        }
-
-        if (pressEnter) {
-            Logger.debug(getUiDevice().pressEnter()
-                    ? "Sent Enter key to the device"
-                    : "Could not send Enter key to the device");
-        }
+        setText(element, model);
         return new AppiumResponse(getSessionId(request));
     }
 }

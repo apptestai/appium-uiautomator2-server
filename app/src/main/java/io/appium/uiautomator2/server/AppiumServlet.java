@@ -16,12 +16,15 @@
 
 package io.appium.uiautomator2.server;
 
+import androidx.annotation.Nullable;
+
+import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
-import androidx.annotation.Nullable;
 import io.appium.uiautomator2.handler.AcceptAlert;
 import io.appium.uiautomator2.handler.CaptureScreenshot;
 import io.appium.uiautomator2.handler.Clear;
@@ -42,9 +45,9 @@ import io.appium.uiautomator2.handler.GetDeviceSize;
 import io.appium.uiautomator2.handler.GetElementAttribute;
 import io.appium.uiautomator2.handler.GetElementScreenshot;
 import io.appium.uiautomator2.handler.GetName;
+import io.appium.uiautomator2.handler.GetOrientation;
 import io.appium.uiautomator2.handler.GetRect;
 import io.appium.uiautomator2.handler.GetRotation;
-import io.appium.uiautomator2.handler.GetScreenOrientation;
 import io.appium.uiautomator2.handler.GetSessionDetails;
 import io.appium.uiautomator2.handler.GetSessions;
 import io.appium.uiautomator2.handler.GetSettings;
@@ -59,14 +62,16 @@ import io.appium.uiautomator2.handler.NewSession;
 import io.appium.uiautomator2.handler.OpenNotification;
 import io.appium.uiautomator2.handler.PressBack;
 import io.appium.uiautomator2.handler.PressKeyCode;
-import io.appium.uiautomator2.handler.RotateScreen;
 import io.appium.uiautomator2.handler.ScrollTo;
 import io.appium.uiautomator2.handler.ScrollToElement;
 import io.appium.uiautomator2.handler.SendKeysToElement;
 import io.appium.uiautomator2.handler.SetClipboard;
+import io.appium.uiautomator2.handler.SetOrientation;
+import io.appium.uiautomator2.handler.SetRotation;
 import io.appium.uiautomator2.handler.Source;
 import io.appium.uiautomator2.handler.Status;
 import io.appium.uiautomator2.handler.Swipe;
+import io.appium.uiautomator2.handler.Tap;
 import io.appium.uiautomator2.handler.TouchDown;
 import io.appium.uiautomator2.handler.TouchLongClick;
 import io.appium.uiautomator2.handler.TouchMove;
@@ -78,7 +83,6 @@ import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.http.IHttpResponse;
 import io.appium.uiautomator2.http.IHttpServlet;
-import io.netty.handler.codec.http.HttpResponseStatus;
 
 public class AppiumServlet implements IHttpServlet {
 
@@ -89,10 +93,10 @@ public class AppiumServlet implements IHttpServlet {
     public static final String NAME_ID_KEY = "NAME_ID_KEY";
     public static final int MAX_ELEMENTS = 3;
     public static final int SECOND_ELEMENT_IDX = 2;
-    private static ConcurrentMap<String, BaseRequestHandler> getHandler = new ConcurrentHashMap<>();
-    private static ConcurrentMap<String, BaseRequestHandler> postHandler = new ConcurrentHashMap<>();
-    private static ConcurrentMap<String, BaseRequestHandler> deleteHandler = new ConcurrentHashMap<>();
-    private ConcurrentMap<String, String[]> mapperUrlSectionsCache = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, BaseRequestHandler> getHandler = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, BaseRequestHandler> postHandler = new ConcurrentHashMap<>();
+    private static final ConcurrentMap<String, BaseRequestHandler> deleteHandler = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, String[]> mapperUrlSectionsCache = new ConcurrentHashMap<>();
 
 
     public AppiumServlet() {
@@ -114,10 +118,10 @@ public class AppiumServlet implements IHttpServlet {
         register(postHandler, new FindElement("/wd/hub/session/:sessionId/element"));
         register(postHandler, new FindElements("/wd/hub/session/:sessionId/elements"));
         register(postHandler, new Click("/wd/hub/session/:sessionId/element/:id/click"));
-        register(postHandler, new Click("/wd/hub/session/:sessionId/appium/tap"));
+        register(postHandler, new Tap("/wd/hub/session/:sessionId/appium/tap"));
         register(postHandler, new Clear("/wd/hub/session/:sessionId/element/:id/clear"));
-        register(postHandler, new RotateScreen("/wd/hub/session/:sessionId/orientation"));
-        register(postHandler, new RotateScreen("/wd/hub/session/:sessionId/rotation"));
+        register(postHandler, new SetOrientation("/wd/hub/session/:sessionId/orientation"));
+        register(postHandler, new SetRotation("/wd/hub/session/:sessionId/rotation"));
         register(postHandler, new PressBack("/wd/hub/session/:sessionId/back"));
         register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/element/:id/value"));
         register(postHandler, new SendKeysToElement("/wd/hub/session/:sessionId/keys"));
@@ -141,6 +145,14 @@ public class AppiumServlet implements IHttpServlet {
         register(postHandler, new SetClipboard("/wd/hub/session/:sessionId/appium/device/set_clipboard"));
         register(postHandler, new AcceptAlert("/wd/hub/session/:sessionId/alert/accept"));
         register(postHandler, new DismissAlert("/wd/hub/session/:sessionId/alert/dismiss"));
+
+        register(postHandler, new io.appium.uiautomator2.handler.gestures.Drag("/wd/hub/session/:sessionId/appium/gestures/drag"));
+        register(postHandler, new io.appium.uiautomator2.handler.gestures.Fling("/wd/hub/session/:sessionId/appium/gestures/fling"));
+        register(postHandler, new io.appium.uiautomator2.handler.gestures.LongClick("/wd/hub/session/:sessionId/appium/gestures/long_click"));
+        register(postHandler, new io.appium.uiautomator2.handler.gestures.PinchClose("/wd/hub/session/:sessionId/appium/gestures/pinch_close"));
+        register(postHandler, new io.appium.uiautomator2.handler.gestures.PinchOpen("/wd/hub/session/:sessionId/appium/gestures/pinch_open"));
+        register(postHandler, new io.appium.uiautomator2.handler.gestures.Scroll("/wd/hub/session/:sessionId/appium/gestures/scroll"));
+        register(postHandler, new io.appium.uiautomator2.handler.gestures.Swipe("/wd/hub/session/:sessionId/appium/gestures/swipe"));
     }
 
     private void registerGetHandler() {
@@ -148,7 +160,7 @@ public class AppiumServlet implements IHttpServlet {
         register(getHandler, new GetSessions("/wd/hub/sessions"));
         register(getHandler, new GetSessionDetails("/wd/hub/session/:sessionId"));
         register(getHandler, new CaptureScreenshot("/wd/hub/session/:sessionId/screenshot"));
-        register(getHandler, new GetScreenOrientation("/wd/hub/session/:sessionId/orientation"));
+        register(getHandler, new GetOrientation("/wd/hub/session/:sessionId/orientation"));
         register(getHandler, new GetRotation("/wd/hub/session/:sessionId/rotation"));
         register(getHandler, new GetText("/wd/hub/session/:sessionId/element/:id/text"));
         register(getHandler, new GetElementAttribute("/wd/hub/session/:sessionId/element/:id/attribute/:name"));
@@ -239,15 +251,12 @@ public class AppiumServlet implements IHttpServlet {
         } else if ("DELETE".equals(request.method())) {
             handler = findMatcher(request, deleteHandler);
         }
-        handleRequest(request, response, handler);
+        if (handler != null) {
+            handleRequest(request, response, handler);
+        }
     }
 
-    private void handleRequest(IHttpRequest request, IHttpResponse response,
-                               @Nullable BaseRequestHandler handler) {
-        if (handler == null) {
-            response.setStatus(HttpResponseStatus.NOT_FOUND.code()).end();
-            return;
-        }
+    private void handleRequest(IHttpRequest request, IHttpResponse response, BaseRequestHandler handler) {
         addHandlerAttributesToRequest(request, handler.getMappedUri());
         AppiumResponse result = handler.handle(request);
         handleResponse(response, result);
@@ -278,7 +287,7 @@ public class AppiumServlet implements IHttpServlet {
 
         String id = getParameter(mappedUri, request.uri(), ":id");
         if (id != null) {
-            request.data().put(ELEMENT_ID_KEY, URLDecoder.decode(id));
+            request.data().put(ELEMENT_ID_KEY, id);
         }
         for (int elementIdx = SECOND_ELEMENT_IDX; elementIdx < MAX_ELEMENTS + SECOND_ELEMENT_IDX; ++elementIdx) {
             String elementId = getParameter(mappedUri, request.uri(), ":id" + elementIdx);
@@ -290,19 +299,19 @@ public class AppiumServlet implements IHttpServlet {
 
     @Nullable
     private String getParameter(String configuredUri, String actualUri, String param) {
-        return getParameter(configuredUri, actualUri, param, true);
-    }
-
-    @Nullable
-    private String getParameter(String configuredUri, String actualUri, String param, boolean sectionLengthValidation) {
         String[] configuredSections = configuredUri.split("/");
         String[] currentSections = actualUri.split("/");
-        if (sectionLengthValidation && configuredSections.length != currentSections.length) {
+        if (configuredSections.length != currentSections.length) {
             return null;
         }
         for (int i = 0; i < currentSections.length; i++) {
-            if (configuredSections[i].contains(param)) {
-                return currentSections[i];
+            if (!configuredSections[i].contains(param)) {
+                continue;
+            }
+            try {
+                return URLDecoder.decode(currentSections[i], StandardCharsets.UTF_8.name());
+            } catch (UnsupportedEncodingException e) {
+                throw new IllegalArgumentException(e);
             }
         }
         return null;

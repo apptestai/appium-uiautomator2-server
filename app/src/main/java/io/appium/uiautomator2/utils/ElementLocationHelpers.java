@@ -16,12 +16,17 @@
 
 package io.appium.uiautomator2.utils;
 
-import java.util.List;
-import java.util.regex.Pattern;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.annotation.Nullable;
 import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiSelector;
+
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.regex.Pattern;
+
 import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
 import io.appium.uiautomator2.common.exceptions.UiSelectorSyntaxException;
 import io.appium.uiautomator2.core.AccessibilityNodeInfoDumper;
@@ -29,8 +34,8 @@ import io.appium.uiautomator2.model.AndroidElement;
 import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.model.By;
 
-import static io.appium.uiautomator2.core.AccessibilityNodeInfoGetter.fromUiObject;
-import static org.apache.commons.lang.StringUtils.isBlank;
+import static io.appium.uiautomator2.core.AxNodeInfoExtractor.toAxNodeInfo;
+import static io.appium.uiautomator2.utils.StringHelpers.isBlank;
 
 public class ElementLocationHelpers {
     /**
@@ -81,9 +86,31 @@ public class ElementLocationHelpers {
         return locator;
     }
 
-    public static NodeInfoList getXPathNodeMatch(final String expression, @Nullable AndroidElement element, boolean multiple) {
-        return new AccessibilityNodeInfoDumper(element == null ? null : fromUiObject(element.getUiObject()))
-                .findNodes(expression, multiple);
+    @Nullable
+    private static Set<Attribute> extractQueriedAttributes(String xpathExpression) {
+        if (xpathExpression.contains("@*")) {
+            return null;
+        }
+
+        Set<Attribute> result = new HashSet<>();
+        for (Attribute attr : Attribute.values()) {
+            if (xpathExpression.contains("@" + attr.toString())) {
+                result.add(attr);
+            }
+        }
+        return result;
+    }
+
+    public static NodeInfoList getXPathNodeMatch(
+            final String expression, @Nullable AndroidElement element, boolean multiple) {
+        AccessibilityNodeInfo root = element == null ? null : toAxNodeInfo(element.getUiObject());
+        // We are trying to be smart here and only include the actually queried
+        // attributes into the source XML document. This allows to improve the performance a lot
+        // while building this document.
+        Set<Attribute> includedAttributes = extractQueriedAttributes(expression);
+        Logger.info(String.format("The following attributes will be included to the page source: %s",
+                includedAttributes == null ? "all" : includedAttributes));
+        return new AccessibilityNodeInfoDumper(root, includedAttributes).findNodes(expression, multiple);
     }
 
     @Nullable

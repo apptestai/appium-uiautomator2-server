@@ -16,14 +16,13 @@
 
 package io.appium.uiautomator2.handler;
 
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import io.appium.uiautomator2.handler.request.SafeRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
+import io.appium.uiautomator2.model.api.AlertModel;
 import io.appium.uiautomator2.utils.AlertHelpers;
-import io.appium.uiautomator2.utils.Logger;
+
+import static io.appium.uiautomator2.utils.ModelUtils.toModel;
 
 public class DismissAlert extends SafeRequestHandler {
     public DismissAlert(String mappedUri) {
@@ -31,12 +30,9 @@ public class DismissAlert extends SafeRequestHandler {
     }
 
     @Override
-    protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException {
-        Logger.info("Dismiss alert command");
-        final JSONObject payload = toJSON(request);
-        final String buttonLabel = payload.has("buttonLabel")
-                ? payload.getString("buttonLabel") : null;
-        AlertHelpers.handle(AlertHelpers.AlertAction.DISMISS, buttonLabel);
+    protected AppiumResponse safeHandle(IHttpRequest request) {
+        AlertModel model = toModel(request, AlertModel.class);
+        AlertHelpers.handle(AlertHelpers.AlertAction.DISMISS, model.buttonLabel);
         return new AppiumResponse(getSessionId(request));
     }
 }

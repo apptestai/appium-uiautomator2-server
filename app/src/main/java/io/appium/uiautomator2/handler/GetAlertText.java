@@ -20,7 +20,6 @@ import io.appium.uiautomator2.handler.request.SafeRequestHandler;
 import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.utils.AlertHelpers;
-import io.appium.uiautomator2.utils.Logger;
 
 public class GetAlertText extends SafeRequestHandler {
     public GetAlertText(String mappedUri) {
@@ -29,7 +28,6 @@ public class GetAlertText extends SafeRequestHandler {
 
     @Override
     protected AppiumResponse safeHandle(IHttpRequest request) {
-        Logger.info("Get alert text command");
         return new AppiumResponse(getSessionId(request), AlertHelpers.getText());
     }
 }

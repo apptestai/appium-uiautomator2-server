@@ -1,8 +1,20 @@
-package io.appium.uiautomator2.handler;
+/*
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * See the NOTICE file distributed with this work for additional
+ * information regarding copyright ownership.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
-import io.appium.uiautomator2.utils.w3c.W3CElementUtils;
-import org.json.JSONException;
-import org.json.JSONObject;
+package io.appium.uiautomator2.handler;
 
 import androidx.test.uiautomator.UiObjectNotFoundException;
 
@@ -13,28 +25,30 @@ import io.appium.uiautomator2.http.AppiumResponse;
 import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.model.AndroidElement;
 import io.appium.uiautomator2.model.AppiumUIA2Driver;
+import io.appium.uiautomator2.model.Point;
 import io.appium.uiautomator2.model.Session;
+import io.appium.uiautomator2.model.api.ElementModel;
+import io.appium.uiautomator2.model.api.FlickByOffsetModel;
+import io.appium.uiautomator2.model.api.FlickBySpeedModel;
 import io.appium.uiautomator2.utils.Logger;
-import io.appium.uiautomator2.utils.Point;
 import io.appium.uiautomator2.utils.PositionHelper;
 
 import static io.appium.uiautomator2.utils.Device.getUiDevice;
+import static io.appium.uiautomator2.utils.ModelUtils.toModel;
 
 public class Flick extends SafeRequestHandler {
+    private static final double SPEED_MAGIC = 1250.0;
 
     public Flick(String mappedUri) {
         super(mappedUri);
     }
 
     @Override
-    protected AppiumResponse safeHandle(IHttpRequest request) throws UiObjectNotFoundException,
-            JSONException {
-        Logger.info("Get Text of element command");
+    protected AppiumResponse safeHandle(IHttpRequest request) throws UiObjectNotFoundException {
         Point start = new Point(0.5, 0.5);
-        Point end = new Point();
+        Point end;
         double steps;
-        JSONObject payload = toJSON(request);
-        final String elementId = W3CElementUtils.extractElementId(payload);
+        final String elementId = toModel(request, ElementModel.class).getUnifiedId();
         if (elementId != null) {
             Session session = AppiumUIA2Driver.getInstance().getSessionOrThrow();
             AndroidElement element = session.getKnownElements().getElementFromCache(elementId);
@@ -42,59 +56,56 @@ public class Flick extends SafeRequestHandler {
                 throw new ElementNotFoundException();
             }
             start = element.getAbsolutePosition(start);
-            final Integer xoffset = Integer.parseInt(payload.getString("xoffset"));
-            final Integer yoffset = Integer.parseInt(payload.getString("yoffset"));
-            final int speed = Integer.parseInt(payload.getString("speed"));
+            FlickByOffsetModel model = toModel(request, FlickByOffsetModel.class);
+            if (model.speed == 0) {
+                throw new IllegalArgumentException("The speed value cannot be zero");
+            }
 
-            steps = 1250.0 / speed + 1;
-            end.x = start.x + xoffset;
-            end.y = start.y + yoffset;
-
+            steps = SPEED_MAGIC / model.speed + 1;
+            end = new Point(start.x + model.xoffset, start.y + model.yoffset);
         } else {
-            final Integer xSpeed = Integer.parseInt(payload.getString("xspeed"));
-            final Integer ySpeed = Integer.parseInt(payload.getString("yspeed"));
+            FlickBySpeedModel model = toModel(request, FlickBySpeedModel.class);
+            if (model.xspeed == 0 && model.yspeed == 0) {
+                throw new IllegalArgumentException("Both xspeed and yspeed cannot be zero");
+            }
 
-            final double speed = Math.min(1250.0, Math.sqrt(xSpeed * xSpeed + ySpeed * ySpeed));
-            steps = 1250.0 / speed + 1;
-
+            final double speed = Math.min(SPEED_MAGIC,
+                    Math.sqrt(model.xspeed * model.xspeed + model.yspeed * model.yspeed));
+            steps = SPEED_MAGIC / speed + 1;
             start = PositionHelper.getDeviceAbsPos(start);
-            end = calculateEndPoint(start, xSpeed, ySpeed);
+            end = calculateEndPoint(start, model.xspeed, model.yspeed);
         }
 
         steps = Math.abs(steps);
-        Logger.debug("Flicking from " + start.toString() + " to " + end.toString()
-                + " with steps: " + (int) steps);
-        final boolean res = getUiDevice().swipe(start.x.intValue(), start.y.intValue(),
-                end.x.intValue(), end.y.intValue(), (int) steps);
-
-        if (res) {
-            return new AppiumResponse(getSessionId(request));
+        Logger.debug(String.format("Flicking from %s to %s in %s steps",
+                start.toString(), end.toString(), (int) steps));
+        if (!performFlick(start, end, (int) steps)) {
+            throw new InvalidElementStateException("Flick did not complete successfully");
         }
-        throw new InvalidElementStateException("Flick did not complete successfully");
+
+        return new AppiumResponse(getSessionId(request));
     }
 
-    private Point calculateEndPoint(final Point start, final Integer xSpeed,
-                                    final Integer ySpeed) {
-        final Point end = new Point();
-        final double speedRatio = (double) xSpeed / ySpeed;
-        double xOff;
-        double yOff;
+    private boolean performFlick(Point start, Point end, int steps) {
+        return getUiDevice().swipe(
+                start.x.intValue(), start.y.intValue(),
+                end.x.intValue(), end.y.intValue(), steps);
+    }
 
-        final double value = Math.min(getUiDevice().getDisplayHeight(), getUiDevice().getDisplayWidth());
-
+    private Point calculateEndPoint(Point start, int xSpeed, int ySpeed) {
+        final double speedRatio = 1.0 * xSpeed / ySpeed;
+        final double minDimension = Math.min(getUiDevice().getDisplayHeight(), getUiDevice().getDisplayWidth());
+        double xOffset;
+        double yOffset;
         if (speedRatio < 1) {
-            yOff = value / 4;
-            xOff = value / 4 * speedRatio;
+            yOffset = minDimension / 4;
+            xOffset = minDimension / 4 * speedRatio;
         } else {
-            xOff = value / 4;
-            yOff = value / 4 / speedRatio;
+            xOffset = minDimension / 4;
+            yOffset = minDimension / 4 / speedRatio;
         }
-
-        xOff = Integer.signum(xSpeed) * xOff;
-        yOff = Integer.signum(ySpeed) * yOff;
-
-        end.x = start.x + xOff;
-        end.y = start.y + yOff;
-        return end;
+        xOffset = Integer.signum(xSpeed) * xOffset;
+        yOffset = Integer.signum(ySpeed) * yOffset;
+        return new Point(start.x + xOffset, start.y + yOffset);
     }
 }

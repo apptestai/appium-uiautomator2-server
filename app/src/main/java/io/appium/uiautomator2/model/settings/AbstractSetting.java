@@ -16,10 +16,10 @@
 
 package io.appium.uiautomator2.model.settings;
 
-import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
+import io.appium.uiautomator2.common.exceptions.InvalidArgumentException;
 import io.appium.uiautomator2.utils.Logger;
 
-public abstract class AbstractSetting<T> implements ISetting {
+public abstract class AbstractSetting<T> implements ISetting<T> {
 
     private final Class<T> valueType;
     private final String settingName;
@@ -30,7 +30,7 @@ public abstract class AbstractSetting<T> implements ISetting {
     }
 
     public void update(Object value) {
-        Logger.debug(String.format("Set the %s to %s", getName(), String.valueOf(value)));
+        Logger.debug(String.format("Set the %s to %s", getName(), value));
         T convertedValue = convertValue(value);
         try {
             apply(convertedValue);
@@ -53,14 +53,18 @@ public abstract class AbstractSetting<T> implements ISetting {
 
     private T convertValue(Object value) {
         try {
-            if (valueType == Long.class && value instanceof Number) {
-                return valueType.cast(((Number) value).longValue());
+            if (value instanceof Number) {
+                if (valueType == Integer.class) {
+                    return valueType.cast(((Number) value).intValue());
+                } else if (valueType == Long.class) {
+                    return valueType.cast(((Number) value).longValue());
+                }
             }
             return valueType.cast(value);
         } catch (ClassCastException e) {
             String errorMsg = String.format("Invalid setting value type. Got: %s. Expected: %s.",
                     value.getClass().getName(), valueType.getName());
-            throw new UiAutomator2Exception(errorMsg);
+            throw new InvalidArgumentException(errorMsg);
         }
     }
 }

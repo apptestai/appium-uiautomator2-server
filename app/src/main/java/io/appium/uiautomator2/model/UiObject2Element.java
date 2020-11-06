@@ -20,33 +20,30 @@ import android.graphics.Rect;
 import android.util.Range;
 import android.view.accessibility.AccessibilityNodeInfo;
 
-import java.util.List;
-import java.util.UUID;
-
 import androidx.annotation.Nullable;
 import androidx.test.uiautomator.BySelector;
+import androidx.test.uiautomator.Direction;
 import androidx.test.uiautomator.UiObject;
 import androidx.test.uiautomator.UiObject2;
 import androidx.test.uiautomator.UiObjectNotFoundException;
 import androidx.test.uiautomator.UiSelector;
 
-import org.apache.commons.lang.StringUtils;
+import java.util.List;
+import java.util.UUID;
 
-import io.appium.uiautomator2.common.exceptions.InvalidCoordinatesException;
-import io.appium.uiautomator2.common.exceptions.InvalidSelectorException;
-import io.appium.uiautomator2.core.AccessibilityNodeInfoGetter;
-import io.appium.uiautomator2.core.AccessibilityNodeInfoHelpers;
+import io.appium.uiautomator2.core.AxNodeInfoHelper;
 import io.appium.uiautomator2.model.internal.CustomUiDevice;
 import io.appium.uiautomator2.utils.Attribute;
 import io.appium.uiautomator2.utils.ElementHelpers;
 import io.appium.uiautomator2.utils.Logger;
-import io.appium.uiautomator2.utils.Point;
 import io.appium.uiautomator2.utils.PositionHelper;
 
+import static io.appium.uiautomator2.core.AxNodeInfoExtractor.toAxNodeInfo;
 import static io.appium.uiautomator2.utils.Device.getAndroidElement;
 import static io.appium.uiautomator2.utils.ElementHelpers.generateNoAttributeException;
+import static io.appium.uiautomator2.utils.StringHelpers.isBlank;
 
-public class UiObject2Element implements AndroidElement {
+public class UiObject2Element extends BaseElement {
 
     private final UiObject2 element;
     private final String id;
@@ -65,17 +62,81 @@ public class UiObject2Element implements AndroidElement {
 
     @Override
     public void click() {
-        element.click();
+        AxNodeInfoHelper.click(toAxNodeInfo(element));
     }
 
     @Override
-    public boolean longClick() {
-        element.longClick();
-        return true;
+    public void longClick() {
+        AxNodeInfoHelper.longClick(toAxNodeInfo(element));
     }
 
     @Override
-    public String getText() throws UiObjectNotFoundException {
+    public void longClick(long durationMs) {
+        AxNodeInfoHelper.longClick(toAxNodeInfo(element), durationMs);
+    }
+
+    @Override
+    public void drag(Point dest) {
+        AxNodeInfoHelper.drag(toAxNodeInfo(element), dest.toNativePoint());
+    }
+
+    @Override
+    public void drag(Point dest, @Nullable Integer speed) {
+        AxNodeInfoHelper.drag(toAxNodeInfo(element), dest.toNativePoint(), speed);
+    }
+
+    @Override
+    public void pinchClose(float percent) {
+        AxNodeInfoHelper.pinchClose(toAxNodeInfo(element), percent);
+    }
+
+    @Override
+    public void pinchClose(float percent, @Nullable Integer speed) {
+        AxNodeInfoHelper.pinchClose(toAxNodeInfo(element), percent, speed);
+    }
+
+    @Override
+    public void pinchOpen(float percent) {
+        AxNodeInfoHelper.pinchOpen(toAxNodeInfo(element), percent);
+    }
+
+    @Override
+    public void pinchOpen(float percent, @Nullable Integer speed) {
+        AxNodeInfoHelper.pinchOpen(toAxNodeInfo(element), percent, speed);
+    }
+
+    @Override
+    public void swipe(Direction direction, float percent) {
+        AxNodeInfoHelper.swipe(toAxNodeInfo(element), direction, percent);
+    }
+
+    @Override
+    public void swipe(Direction direction, float percent, @Nullable Integer speed) {
+        AxNodeInfoHelper.swipe(toAxNodeInfo(element), direction, percent, speed);
+    }
+
+    @Override
+    public boolean scroll(Direction direction, float percent) {
+        return AxNodeInfoHelper.scroll(toAxNodeInfo(element), direction, percent);
+    }
+
+    @Override
+    public boolean scroll(Direction direction, float percent, @Nullable Integer speed) {
+        return AxNodeInfoHelper.scroll(toAxNodeInfo(element), direction, percent, speed);
+    }
+
+    @Override
+    public boolean fling(Direction direction) {
+        return AxNodeInfoHelper.fling(toAxNodeInfo(element), direction);
+    }
+
+    @Override
+    public boolean fling(Direction direction, @Nullable Integer speed) {
+        return AxNodeInfoHelper.fling(toAxNodeInfo(element), direction, speed);
+    }
+
+    @Override
+    public String getText() {
         // By convention the text is replaced with an empty string if it equals to null
         return ElementHelpers.getText(element);
     }
@@ -138,21 +199,22 @@ public class UiObject2Element implements AndroidElement {
                 result = element.isSelected();
                 break;
             case DISPLAYED:
-                result = AccessibilityNodeInfoHelpers.isVisible(AccessibilityNodeInfoGetter.fromUiObject(element));
+                result = AxNodeInfoHelper.isVisible(toAxNodeInfo(element));
                 break;
             case PASSWORD:
-                result = AccessibilityNodeInfoHelpers.isPassword(AccessibilityNodeInfoGetter.fromUiObject(element));
+                result = AxNodeInfoHelper.isPassword(toAxNodeInfo(element));
                 break;
             case BOUNDS:
-                result = element.getVisibleBounds().toShortString();
+                result = getBounds().toShortString();
                 break;
             case PACKAGE:
-                result = AccessibilityNodeInfoHelpers.getPackageName(AccessibilityNodeInfoGetter.fromUiObject(element));
+                result = AxNodeInfoHelper.getPackageName(toAxNodeInfo(element));
                 break;
             case SELECTION_END:
             case SELECTION_START:
-                Range<Integer> selectionRange = AccessibilityNodeInfoHelpers.getSelectionRange(AccessibilityNodeInfoGetter.fromUiObject(element));
-                result = selectionRange == null ? null
+                Range<Integer> selectionRange = AxNodeInfoHelper.getSelectionRange(toAxNodeInfo(element));
+                result = selectionRange == null
+                        ? null
                         : (dstAttribute == Attribute.SELECTION_END ? selectionRange.getUpper() : selectionRange.getLower());
                 break;
             default:
@@ -170,13 +232,23 @@ public class UiObject2Element implements AndroidElement {
     }
 
     @Override
+    public void setProgress(float value) {
+        ElementHelpers.setProgress(element, value);
+    }
+
+    @Override
+    public boolean canSetProgress() {
+        return ElementHelpers.canSetProgress(element);
+    }
+
+    @Override
     public By getBy() {
         return by;
     }
 
     @Override
     public String getContextId() {
-        return StringUtils.isBlank(contextId) ? null : contextId;
+        return isBlank(contextId) ? null : contextId;
     }
 
     @Override
@@ -196,55 +268,49 @@ public class UiObject2Element implements AndroidElement {
 
     @Override
     public Rect getBounds() {
-        return element.getVisibleBounds();
+        return AxNodeInfoHelper.getBounds(toAxNodeInfo(element));
     }
 
     @Nullable
     @Override
-    public Object getChild(final Object selector)
-            throws UiObjectNotFoundException, InvalidSelectorException, ClassNotFoundException {
+    public Object getChild(final Object selector) throws UiObjectNotFoundException {
         if (selector instanceof UiSelector) {
             /*
              * We can't find the child element with UiSelector on UiObject2,
              * as an alternative creating UiObject with UiObject2's AccessibilityNodeInfo
              * and finding the child element on UiObject.
              */
-            AccessibilityNodeInfo nodeInfo = AccessibilityNodeInfoGetter.fromUiObject(element);
-
-            UiSelector uiSelector = new UiSelector();
-            CustomUiSelector customUiSelector = new CustomUiSelector(uiSelector);
-            uiSelector = customUiSelector.getUiSelector(nodeInfo);
+            AccessibilityNodeInfo nodeInfo = toAxNodeInfo(element);
+            UiSelector uiSelector = UiSelectorHelper.toUiSelector(nodeInfo);
             Object uiObject = CustomUiDevice.getInstance().findObject(uiSelector);
-            if (uiObject instanceof UiObject) {
-                AccessibilityNodeInfoGetter.fromUiObject(element);
-                return ((UiObject) uiObject).getChild((UiSelector) selector);
+            if (!(uiObject instanceof UiObject)) {
+                return null;
             }
-            return null;
+            UiObject result = ((UiObject) uiObject).getChild((UiSelector) selector);
+            if (result != null && !result.exists()) {
+                return null;
+            }
+            return result;
         }
         return element.findObject((BySelector) selector);
     }
 
     @Override
-    public List<Object> getChildren(final Object selector, final By by)
-            throws UiObjectNotFoundException, InvalidSelectorException, ClassNotFoundException {
+    public List<?> getChildren(final Object selector, final By by) throws UiObjectNotFoundException {
         if (selector instanceof UiSelector) {
             /*
              * We can't find the child elements with UiSelector on UiObject2,
              * as an alternative creating UiObject with UiObject2's AccessibilityNodeInfo
              * and finding the child elements on UiObject.
              */
-            AccessibilityNodeInfo nodeInfo = AccessibilityNodeInfoGetter.fromUiObject(element);
-
-            UiSelector uiSelector = new UiSelector();
-            CustomUiSelector customUiSelector = new CustomUiSelector(uiSelector);
-            uiSelector = customUiSelector.getUiSelector(nodeInfo);
+            AccessibilityNodeInfo nodeInfo = toAxNodeInfo(element);
+            UiSelector uiSelector = UiSelectorHelper.toUiSelector(nodeInfo);
             UiObject uiObject = (UiObject) CustomUiDevice.getInstance().findObject(uiSelector);
             String id = UUID.randomUUID().toString();
             AndroidElement androidElement = getAndroidElement(id, uiObject, true, by, getContextId());
             return androidElement.getChildren(selector, by);
         }
-        //noinspection unchecked
-        return (List) element.findObjects((BySelector) selector);
+        return element.findObjects((BySelector) selector);
     }
 
     @Override
@@ -258,13 +324,10 @@ public class UiObject2Element implements AndroidElement {
     }
 
     @Override
-    public Point getAbsolutePosition(final Point point)
-            throws InvalidCoordinatesException {
-        final Rect rect = this.getBounds();
-
-        Logger.debug("Element bounds: " + rect.toShortString());
-
-        return PositionHelper.getAbsolutePosition(point, rect, new Point(rect.left, rect.top), false);
+    public Point getAbsolutePosition(final Point offset) {
+        final Rect bounds = this.getBounds();
+        Logger.debug("Element bounds: " + bounds.toShortString());
+        return PositionHelper.getAbsolutePosition(new Point(bounds.left, bounds.top), bounds, offset, false);
     }
 
     @Override
@@ -285,7 +348,7 @@ public class UiObject2Element implements AndroidElement {
     }
 
     @Override
-    public boolean dragTo(int destX, int destY, int steps) throws InvalidCoordinatesException {
+    public boolean dragTo(int destX, int destY, int steps) {
         Point coords = new Point(destX, destY);
         coords = PositionHelper.getDeviceAbsPos(coords);
         element.drag(new android.graphics.Point(coords.x.intValue(), coords.y.intValue()), steps);

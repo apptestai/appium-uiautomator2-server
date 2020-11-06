@@ -16,6 +16,8 @@
 
 package io.appium.uiautomator2.model.settings;
 
+import androidx.test.uiautomator.Configurator;
+
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,17 +27,13 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import androidx.test.uiautomator.Configurator;
-
 import static org.mockito.Matchers.anyLong;
-import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({Configurator.class})
 public class ActionAcknowledgmentTimeoutTests {
-
     private ActionAcknowledgmentTimeout actionAcknowledgmentTimeout;
 
     @Mock
@@ -61,13 +59,13 @@ public class ActionAcknowledgmentTimeoutTests {
 
     @Test
     public void shouldBeAbleToSetActionAcknowledgmentTimeout() {
-        actionAcknowledgmentTimeout.update(123);
-        verify(configurator).setActionAcknowledgmentTimeout(123);
+        actionAcknowledgmentTimeout.update(123L);
+        verify(configurator).setActionAcknowledgmentTimeout(123L);
     }
 
     @Test
     public void shouldBeAbleToGetActionAcknowledgmentTimeout() {
-        doReturn(123L).when(configurator).getActionAcknowledgmentTimeout();
+        when(configurator.getActionAcknowledgmentTimeout()).thenReturn(123L);
         Assert.assertEquals(Long.valueOf(123), actionAcknowledgmentTimeout.getValue());
     }
 }

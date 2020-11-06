@@ -18,12 +18,13 @@ package io.appium.uiautomator2.model;
 
 import android.view.accessibility.AccessibilityNodeInfo;
 
+import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
+
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
 import io.appium.uiautomator2.utils.Attribute;
 
 /**
@@ -34,10 +35,6 @@ import io.appium.uiautomator2.utils.Attribute;
  * @param <E> the type of the concrete subclass of UiElement
  */
 public abstract class UiElement<R, E extends UiElement<R, E>> {
-    // These two attribute names are used for debugging only.
-    // The two constants are used internally and must match to-uiautomator.xsl.
-    public static final String ATTRIB_VISIBLE_BOUNDS = "VisibleBounds";
-    public static final String ATTRIB_NOT_VISIBLE = "NotVisible";
     private final AccessibilityNodeInfo node;
 
     public UiElement(AccessibilityNodeInfo node) {
@@ -63,7 +60,7 @@ public abstract class UiElement<R, E extends UiElement<R, E>> {
     }
 
     @SuppressWarnings("unchecked")
-    private  <T> T get(Attribute attribute, T defaultValue) {
+    private <T> T get(Attribute attribute, T defaultValue) {
         if (!getAttributes().containsKey(attribute)) {
             return defaultValue;
         }
@@ -138,7 +135,7 @@ public abstract class UiElement<R, E extends UiElement<R, E>> {
     }
 
     public boolean isSelected() {
-        return  get(Attribute.SELECTED, false);
+        return get(Attribute.SELECTED, false);
     }
 
     public int getIndex() {

@@ -23,20 +23,20 @@ import android.content.Intent;
 import android.os.Build;
 import android.os.Looper;
 import android.os.PowerManager;
-
 import android.os.SystemClock;
 
 import androidx.test.platform.app.InstrumentationRegistry;
 import androidx.test.uiautomator.Configurator;
 
 import io.appium.uiautomator2.common.exceptions.SessionRemovedException;
-import io.appium.uiautomator2.common.exceptions.UiAutomator2Exception;
 import io.appium.uiautomator2.model.settings.Settings;
 import io.appium.uiautomator2.model.settings.ShutdownOnPowerDisconnect;
+import io.appium.uiautomator2.server.mjpeg.MjpegScreenshotServer;
 import io.appium.uiautomator2.utils.Logger;
 
 import static android.content.Intent.ACTION_POWER_DISCONNECTED;
 import static androidx.test.core.app.ApplicationProvider.getApplicationContext;
+import static io.appium.uiautomator2.server.ServerConfig.getMjpegServerPort;
 import static io.appium.uiautomator2.server.ServerConfig.getServerPort;
 import static io.appium.uiautomator2.utils.Device.getUiDevice;
 
@@ -50,7 +50,9 @@ public class ServerInstrumentation {
 
     private final PowerManager powerManager;
     private final int serverPort;
+    private final int mjpegServerPort;
     private HttpdThread serverThread;
+    private MjpegScreenshotServer mjpegScreenshotServerThread;
     private PowerManager.WakeLock wakeLock;
     private long wakeLockAcquireTimestampMs = 0;
     private long wakeLockTimeoutMs = 0;
@@ -73,12 +75,33 @@ public class ServerInstrumentation {
         }
     }
 
-    private ServerInstrumentation(Context context, int serverPort) {
-        if (!isValidPort(serverPort)) {
-            throw new UiAutomator2Exception(String.format(
-                    "The port is out of valid range [%s;%s]: %s", MIN_PORT, MAX_PORT, serverPort));
+    private ServerInstrumentation(Context context, int serverPort, int mjpegServerPort) {
+        if (isValidPort(serverPort)) {
+            this.serverPort = serverPort;
+        } else {
+            Logger.warn(String.format(
+                "The server port is out of valid range [%s;%s]: %s -- using default: %s",
+                MIN_PORT,
+                MAX_PORT,
+                serverPort,
+                ServerConfig.DEFAULT_SERVER_PORT
+            ));
+            this.serverPort = ServerConfig.DEFAULT_SERVER_PORT;
         }
-        this.serverPort = serverPort;
+
+        if (isValidPort(mjpegServerPort)) {
+            this.mjpegServerPort = mjpegServerPort;
+        } else {
+            Logger.warn(String.format(
+                "The MJPEG server port is out of valid range [%s;%s]: %s -- using default: %s",
+                MIN_PORT,
+                MAX_PORT,
+                mjpegServerPort,
+                ServerConfig.DEFAULT_MJPEG_SERVER_PORT
+            ));
+            this.mjpegServerPort = ServerConfig.DEFAULT_MJPEG_SERVER_PORT;
+        }
+
         this.powerManager = (PowerManager) context.getSystemService(Context.POWER_SERVICE);
 
         setAccessibilityServiceState();
@@ -86,7 +109,11 @@ public class ServerInstrumentation {
 
     public static synchronized ServerInstrumentation getInstance() {
         if (instance == null) {
-            instance = new ServerInstrumentation(getApplicationContext(), getServerPort());
+            instance = new ServerInstrumentation(
+                getApplicationContext(),
+                getServerPort(),
+                getMjpegServerPort()
+            );
         }
         return instance;
     }
@@ -179,6 +206,7 @@ public class ServerInstrumentation {
 
         serverThread = new HttpdThread(this.serverPort);
         serverThread.start();
+
         //client to wait for io.appium.uiautomator2.server to up
         Logger.info("io.appium.uiautomator2.server started:");
     }
@@ -187,6 +215,7 @@ public class ServerInstrumentation {
         if (serverThread == null) {
             return;
         }
+
         if (!serverThread.isAlive()) {
             serverThread = null;
             return;
@@ -203,8 +232,34 @@ public class ServerInstrumentation {
         isServerStopped = true;
     }
 
-    public static class PowerConnectionReceiver extends BroadcastReceiver {
+    public void startMjpegServer() {
+        if (mjpegScreenshotServerThread != null && mjpegScreenshotServerThread.isAlive()) {
+            return;
+        }
 
+        Logger.info("Starting MJPEG Server");
+        mjpegScreenshotServerThread = new MjpegScreenshotServer(mjpegServerPort);
+        mjpegScreenshotServerThread.start();
+        Logger.info("MJPEG Server started");
+    }
+
+    public void stopMjpegServer() {
+        if (mjpegScreenshotServerThread == null || !mjpegScreenshotServerThread.isAlive()) {
+            return;
+        }
+
+        Logger.info("Stopping MJPEG Server");
+        mjpegScreenshotServerThread.interrupt();
+        try {
+            mjpegScreenshotServerThread.join();
+        } catch (InterruptedException ignored) {
+            // swallow
+        }
+        mjpegScreenshotServerThread = null;
+        Logger.info("MJPEG Server stoppped");
+    }
+
+    public static class PowerConnectionReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             Logger.debug("Received broadcast action: " + intent.getAction());
@@ -227,12 +282,12 @@ public class ServerInstrumentation {
             }
 
             Logger.info("The device was disconnected from power source. Shutting down the server.");
+            getInstance().stopMjpegServer();
             getInstance().stopServer();
         }
     }
 
     private class HttpdThread extends Thread {
-
         private final AndroidServer server;
         private Looper looper;
 

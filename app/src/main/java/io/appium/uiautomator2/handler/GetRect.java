@@ -16,11 +16,6 @@
 
 package io.appium.uiautomator2.handler;
 
-import android.graphics.Rect;
-
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import androidx.test.uiautomator.UiObjectNotFoundException;
 
 import io.appium.uiautomator2.common.exceptions.ElementNotFoundException;
@@ -30,7 +25,7 @@ import io.appium.uiautomator2.http.IHttpRequest;
 import io.appium.uiautomator2.model.AndroidElement;
 import io.appium.uiautomator2.model.AppiumUIA2Driver;
 import io.appium.uiautomator2.model.Session;
-import io.appium.uiautomator2.utils.Logger;
+import io.appium.uiautomator2.model.api.ElementRectModel;
 
 /**
  * This handler is used to get the boundaries of elements that support it.
@@ -41,26 +36,14 @@ public class GetRect extends SafeRequestHandler {
         super(mappedUri);
     }
 
-    public static JSONObject getElementRectJSON(AndroidElement element) throws UiObjectNotFoundException, JSONException {
-        final JSONObject result = new JSONObject();
-        final Rect rect = element.getBounds();
-        result.put("x", rect.left);
-        result.put("y", rect.top);
-        result.put("width", rect.width());
-        result.put("height", rect.height());
-        return result;
-    }
-
     @Override
-    protected AppiumResponse safeHandle(IHttpRequest request) throws JSONException, UiObjectNotFoundException {
-        Logger.info("Get Rect of element command");
+    protected AppiumResponse safeHandle(IHttpRequest request) throws UiObjectNotFoundException {
         String id = getElementId(request);
         Session session = AppiumUIA2Driver.getInstance().getSessionOrThrow();
         AndroidElement element = session.getKnownElements().getElementFromCache(id);
         if (element == null) {
             throw new ElementNotFoundException();
         }
-        JSONObject result = getElementRectJSON(element);
-        return new AppiumResponse(getSessionId(request), result);
+        return new AppiumResponse(getSessionId(request), new ElementRectModel(element.getBounds()));
     }
 }

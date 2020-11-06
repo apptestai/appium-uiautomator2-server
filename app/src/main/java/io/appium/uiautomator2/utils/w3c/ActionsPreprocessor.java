@@ -16,20 +16,17 @@
 
 package io.appium.uiautomator2.utils.w3c;
 
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
-
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import io.appium.uiautomator2.model.api.touch.w3c.W3CGestureModel;
+import io.appium.uiautomator2.model.api.touch.w3c.W3CItemModel;
+
 import static io.appium.uiautomator2.utils.w3c.ActionsConstants.ACTION_ITEM_TYPE_KEY;
 import static io.appium.uiautomator2.utils.w3c.ActionsConstants.ACTION_ITEM_TYPE_POINTER_CANCEL;
-import static io.appium.uiautomator2.utils.w3c.ActionsConstants.ACTION_KEY_ACTIONS;
 import static io.appium.uiautomator2.utils.w3c.ActionsConstants.ACTION_KEY_ID;
-import static io.appium.uiautomator2.utils.w3c.ActionsConstants.ACTION_KEY_PARAMETERS;
 import static io.appium.uiautomator2.utils.w3c.ActionsConstants.ACTION_KEY_TYPE;
 import static io.appium.uiautomator2.utils.w3c.ActionsConstants.ACTION_TYPES;
 import static io.appium.uiautomator2.utils.w3c.ActionsConstants.ACTION_TYPE_KEY;
@@ -42,20 +39,18 @@ import static io.appium.uiautomator2.utils.w3c.ActionsConstants.POINTER_ITEM_TYP
 import static io.appium.uiautomator2.utils.w3c.ActionsConstants.POINTER_TYPES;
 
 public class ActionsPreprocessor {
-    private static JSONArray preprocessActionItems(final String actionId,
-                                                   final String actionType,
-                                                   final JSONArray actionItems) throws JSONException {
-        final JSONArray processedItems = new JSONArray();
-
+    private static List<W3CGestureModel> preprocessGestures(final String actionId,
+                                                            final String actionType,
+                                                            final List<W3CGestureModel> gestures) {
+        final List<W3CGestureModel> processedItems = new ArrayList<>();
         boolean shouldSkipNextItem = false;
-        for (int i = actionItems.length() - 1; i >= 0; i--) {
-            final JSONObject actionItem = actionItems.getJSONObject(i);
-            if (!actionItem.has(ACTION_ITEM_TYPE_KEY)) {
+        for (int i = gestures.size() - 1; i >= 0; i--) {
+            final W3CGestureModel gesture = gestures.get(i);
+            if (gesture.type == null) {
                 throw new ActionsParseException(
                         String.format("All items of '%s' action must have the %s key set",
                                 actionId, ACTION_ITEM_TYPE_KEY));
             }
-            final String actionItemType = actionItem.getString(ACTION_ITEM_TYPE_KEY);
             List<String> allowedItemTypes;
             switch (actionType) {
                 case ACTION_TYPE_POINTER:
@@ -72,14 +67,14 @@ public class ActionsPreprocessor {
                             String.format("Unknown action type '%s' is set for '%s' action",
                                     actionType, actionId));
             }
-            if (!allowedItemTypes.contains(actionItemType)) {
+            if (!allowedItemTypes.contains(gesture.type)) {
                 throw new ActionsParseException(String.format(
                         "Only %s item type values are supported for action type '%s'. " +
                                 "'%s' is passed instead for action '%s'",
-                        allowedItemTypes, actionType, actionItemType, actionId));
+                        allowedItemTypes, actionType, gesture.type, actionId));
             }
 
-            if (actionItemType.equals(ACTION_ITEM_TYPE_POINTER_CANCEL)) {
+            if (gesture.type.equals(ACTION_ITEM_TYPE_POINTER_CANCEL)) {
                 shouldSkipNextItem = true;
                 continue;
             }
@@ -88,27 +83,25 @@ public class ActionsPreprocessor {
                 continue;
             }
 
-            processedItems.put(actionItem);
+            processedItems.add(gesture);
         }
 
-        final JSONArray result = new JSONArray();
-        for (int i = processedItems.length() - 1; i >= 0; i--) {
-            result.put(processedItems.getJSONObject(i));
+        final List<W3CGestureModel> result = new ArrayList<>();
+        for (int i = processedItems.size() - 1; i >= 0; i--) {
+            result.add(processedItems.get(i));
         }
         return result;
     }
 
-    public JSONArray preprocess(JSONArray actions) throws JSONException {
+    public List<W3CItemModel> preprocess(List<W3CItemModel> items) {
         final List<String> actionIds = new ArrayList<>();
         final Set<String> pointerTypes = new HashSet<>();
-        for (int i = 0; i < actions.length(); i++) {
-            final JSONObject action = actions.getJSONObject(i);
-
-            if (!action.has(ACTION_KEY_ID)) {
+        for (final W3CItemModel actionItem : items) {
+            if (actionItem.id == null) {
                 throw new ActionsParseException(
                         String.format("All actions must have the %s key set", ACTION_KEY_ID));
             }
-            final String actionId = action.getString(ACTION_KEY_ID);
+            final String actionId = actionItem.id;
             if (actionIds.contains(actionId)) {
                 throw new ActionsParseException(
                         String.format("The action %s '%s' has one one or more duplicates",
@@ -116,12 +109,12 @@ public class ActionsPreprocessor {
             }
 
             actionIds.add(actionId);
-            if (!action.has(ACTION_KEY_TYPE)) {
+            if (actionItem.type == null) {
                 throw new ActionsParseException(
                         String.format("'%s' action must have the %s key set",
                                 actionId, ACTION_KEY_TYPE));
             }
-            final String actionType = action.getString(ACTION_KEY_TYPE);
+            final String actionType = actionItem.type;
             if (!ACTION_TYPES.contains(actionType)) {
                 throw new ActionsParseException(String.format(
                         "Only %s values are supported for %s key. "
@@ -129,39 +122,33 @@ public class ActionsPreprocessor {
                         ACTION_TYPES, ACTION_KEY_TYPE, actionType, actionId));
             }
 
-            if (action.has(ACTION_KEY_PARAMETERS)) {
-                final JSONObject params = action.getJSONObject(ACTION_KEY_PARAMETERS);
-                if (params.has(PARAMETERS_KEY_POINTER_TYPE)) {
-                    final String pointerType = params.getString(PARAMETERS_KEY_POINTER_TYPE);
-                    if (!POINTER_TYPES.contains(pointerType)) {
-                        throw new ActionsParseException(String.format(
-                                "Only %s values are supported for %s key. " +
-                                        "'%s' is passed instead for action '%s'",
-                                POINTER_TYPES, PARAMETERS_KEY_POINTER_TYPE,
-                                pointerType, actionId));
-                    }
-                    pointerTypes.add(pointerType);
-                    if (!actionType.equals(ACTION_TYPE_POINTER)) {
-                        throw new ActionsParseException(String.format(
-                                "%s parameter is only supported for action type '%s' in '%s' action",
-                                PARAMETERS_KEY_POINTER_TYPE, ACTION_TYPE_POINTER, actionId));
-                    }
+            if (actionItem.parameters != null && actionItem.parameters.pointerType != null) {
+                if (!POINTER_TYPES.contains(actionItem.parameters.pointerType)) {
+                    throw new ActionsParseException(String.format(
+                            "Only %s values are supported for %s key. " +
+                                    "'%s' is passed instead for action '%s'",
+                            POINTER_TYPES, PARAMETERS_KEY_POINTER_TYPE,
+                            actionItem.parameters.pointerType, actionId));
+                }
+                pointerTypes.add(actionItem.parameters.pointerType);
+                if (!actionType.equals(ACTION_TYPE_POINTER)) {
+                    throw new ActionsParseException(String.format(
+                            "%s parameter is only supported for action type '%s' in '%s' action",
+                            PARAMETERS_KEY_POINTER_TYPE, ACTION_TYPE_POINTER, actionId));
                 }
             }
 
-            if (!action.has(ACTION_KEY_ACTIONS)) {
+            if (actionItem.actions == null) {
                 throw new ActionsParseException(String.format(
                         "'%s' action should contain at least one item", actionId));
             }
-            final JSONArray actionItems = action.getJSONArray(ACTION_KEY_ACTIONS);
-            action.put(ACTION_KEY_ACTIONS,
-                    preprocessActionItems(actionId, actionType, actionItems));
+            actionItem.actions = preprocessGestures(actionId, actionType, actionItem.actions);
         }
         if (pointerTypes.size() > 1) {
             throw new ActionsParseException(String.format(
                     "It is only allowed to use one pointer type simultaneously. And you have %s: %s",
                     pointerTypes.size(), pointerTypes));
         }
-        return actions;
+        return items;
     }
 }
