@@ -193,7 +193,7 @@ public abstract class ElementHelpers {
         }
 
         /////////////////////////////////// ADDED BY MO: set text using IME ///////////////////////////////////////////////////
-        // In some cases, the password field was not filled with IME.
+        // In some cases, the password field was not edited with IME.
         if(!nodeInfo.isPassword()) {
             // java.lang.NullPointerException on UiObject2.setText(): API Level <= 19
             ApptestAIUnicodeIME ime = ApptestAIUnicodeIME.getCurrentIME();

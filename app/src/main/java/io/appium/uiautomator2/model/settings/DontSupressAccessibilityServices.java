@@ -17,9 +17,11 @@
 package io.appium.uiautomator2.model.settings;
 
 import android.app.UiAutomation;
-
 import androidx.test.uiautomator.Configurator;
 
+/**
+ * ADDEDB BY MO: change default timeout(10sec -> 3sec)
+ */
 public class DontSupressAccessibilityServices extends AbstractSetting<Boolean> {
 
     private static final String SETTING_NAME = "dontSupressAccessibilityServices";

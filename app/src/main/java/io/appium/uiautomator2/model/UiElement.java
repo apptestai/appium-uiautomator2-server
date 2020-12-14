@@ -165,7 +165,7 @@ public abstract class UiElement<R, E extends UiElement<R, E>> {
     public String getHintText() {
         return get(Attribute.HINT_TEXT);
     }
-    public Rect getBreakDump(){return get(Attribute.BREAK_DUMP, null);}
+    public String getBreakDump(){return get(Attribute.BREAK_DUMP, null);}
     //END
 
     protected abstract Map<Attribute, Object> getAttributes();
