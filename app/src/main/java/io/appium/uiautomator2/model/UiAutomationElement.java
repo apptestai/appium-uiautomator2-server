@@ -61,8 +61,13 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
     // ADDED BY MO: to solve too many elements
     private Rect screenBounds = null;
     private boolean skipUnbound = false;
+
+    private final static int INVALID_SIZE = 10;
+    private final static int MAX_CHILD = 100;
+
     public static final String UNBOUNDS_VAL = "unbound";
     public static final String MAX_DEPTH_VAL = "max depth";
+    public static final String MAX_CHILD_VAL = "max child";
     // END
 
     /**
@@ -230,10 +235,24 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
     private List<UiAutomationElement> buildChildren(AccessibilityNodeInfo node, Map<Attribute, Object> attributes) {
         if (this.skipUnbound) {
             Rect bounds = AccessibilityNodeInfoHelpers.getVisibleBounds(node);
-            if (this.screenBounds != null && bounds != null && !this.screenBounds.intersects(bounds.left, bounds.top, bounds.right, bounds.bottom)) {
-//                Logger.debug(String.format("skip unbound element %s", bounds.toShortString()));
-                this.put(attributes, Attribute.BREAK_DUMP, UiAutomationElement.UNBOUNDS_VAL);
-                return Collections.emptyList();
+            if (this.screenBounds != null && bounds != null) {
+                // outside of screen
+                if (!this.screenBounds.intersects(bounds.left, bounds.top, bounds.right, bounds.bottom)) {
+                    Logger.debug(String.format("skip unbound element %s", bounds.toShortString()));
+                    this.put(attributes, Attribute.BREAK_DUMP, UiAutomationElement.UNBOUNDS_VAL);
+                    return Collections.emptyList();
+                }
+
+                // invalid size
+                else if (bounds.height() <= INVALID_SIZE && (bounds.bottom == this.screenBounds.bottom || bounds.top == this.screenBounds.top)) {
+                    Logger.debug(String.format("skip unbound element %s", bounds.toShortString()));
+                    this.put(attributes, Attribute.BREAK_DUMP, UiAutomationElement.UNBOUNDS_VAL);
+                    return Collections.emptyList();
+                } else if (bounds.width() <= INVALID_SIZE && (bounds.left == this.screenBounds.left || bounds.right == this.screenBounds.right)) {
+                    Logger.debug(String.format("skip unbound element %s", bounds.toShortString()));
+                    this.put(attributes, Attribute.BREAK_DUMP, UiAutomationElement.UNBOUNDS_VAL);
+                    return Collections.emptyList();
+                }
             }
         }
 
@@ -255,6 +274,14 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
                 .getSessionOrThrow()
                 .getCapability(ALLOW_INVISIBLE_ELEMENTS.toString(), false);
         for (int i = 0; i < childCount; i++) {
+            // ADDED BY MO: for availability of source api
+            if (i >= MAX_CHILD) {
+                Logger.warn(String.format("Skipping building children of '%s' because the maximum " +
+                        "child (%s) has been reached", node, MAX_CHILD));
+                this.put(attributes, Attribute.BREAK_DUMP, UiAutomationElement.MAX_CHILD_VAL);
+                break;
+            }
+            // END
             AccessibilityNodeInfo child = node.getChild(i);
             //Ignore if element is not visible on the screen
             if (child != null && (child.isVisibleToUser() || areInvisibleElementsAllowed)) {
