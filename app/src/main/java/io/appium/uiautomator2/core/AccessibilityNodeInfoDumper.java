@@ -198,7 +198,7 @@ public class AccessibilityNodeInfoDumper {
             Logger.error(String.format("The xml tree dump has reached its maximum data size of %s at " +
                     "'%s'.", optionMaxSize, className));
             if (uiElement.getBreakDump() == null) {
-                serializer.attribute(NAMESPACE, Attribute.BREAK_DUMP.getName(), UiAutomationElement.UNBOUNDS_VAL);
+                serializer.attribute(NAMESPACE, Attribute.BREAK_DUMP.getName(), UiAutomationElement.MAX_SIZE_VAL);
             }
         } else {
             for (UiElement<?, ?> child : uiElement.getChildren()) {
