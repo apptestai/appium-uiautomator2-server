@@ -235,6 +235,8 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
     private List<UiAutomationElement> buildChildren(AccessibilityNodeInfo node, Map<Attribute, Object> attributes) {
         if (this.skipUnbound) {
             Rect bounds = AccessibilityNodeInfoHelpers.getVisibleBounds(node);
+            float harfScreenWidth = this.screenBounds.width()/2;
+            float harfScreenHeight = this.screenBounds.height()/2;
             if (this.screenBounds != null && bounds != null) {
                 // outside of screen
                 if (!this.screenBounds.intersects(bounds.left, bounds.top, bounds.right, bounds.bottom)) {
@@ -244,11 +246,11 @@ public class UiAutomationElement extends UiElement<AccessibilityNodeInfo, UiAuto
                 }
 
                 // invalid size
-                else if (bounds.height() <= INVALID_SIZE && (bounds.bottom == this.screenBounds.bottom || bounds.top == this.screenBounds.top)) {
+                else if (bounds.height() <= INVALID_SIZE && (bounds.bottom == this.screenBounds.bottom || bounds.top == this.screenBounds.top) && bounds.width() >= harfScreenWidth) {
                     Logger.debug(String.format("skip unbound element %s", bounds.toShortString()));
                     this.put(attributes, Attribute.BREAK_DUMP, UiAutomationElement.UNBOUNDS_VAL);
                     return Collections.emptyList();
-                } else if (bounds.width() <= INVALID_SIZE && (bounds.left == this.screenBounds.left || bounds.right == this.screenBounds.right)) {
+                } else if (bounds.width() <= INVALID_SIZE && (bounds.left == this.screenBounds.left || bounds.right == this.screenBounds.right) && bounds.height() >= harfScreenHeight) {
                     Logger.debug(String.format("skip unbound element %s", bounds.toShortString()));
                     this.put(attributes, Attribute.BREAK_DUMP, UiAutomationElement.UNBOUNDS_VAL);
                     return Collections.emptyList();
