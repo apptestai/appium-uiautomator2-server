@@ -19,6 +19,7 @@ import io.appium.uiautomator2.model.AndroidElement;
 import io.appium.uiautomator2.model.By;
 import io.appium.uiautomator2.model.UiObject2Element;
 import io.appium.uiautomator2.model.UiObjectElement;
+import io.appium.uiautomator2.model.internal.CustomUiDevice;
 import io.appium.uiautomator2.model.settings.Settings;
 import io.appium.uiautomator2.model.settings.UseDeviceRealSize;
 import io.appium.uiautomator2.model.settings.WaitForIdleTimeout;
@@ -114,7 +115,9 @@ public abstract class Device {
 
     public static void waitForIdle(long idleTimeInMS, long globaTimeInMS) {
         try {
-            InstrumentationRegistry.getInstrumentation().getUiAutomation().waitForIdle(idleTimeInMS, globaTimeInMS);
+            //MODIFIED BY MO: If run page_source after running waitForIdle(idleTimeInMS, globaTimeInMS), the screen is flickering
+            //CustomUiDevice.getInstance().getInstrumentation().getUiAutomation().waitForIdle(idleTimeInMS, globaTimeInMS);
+            getUiDevice().waitForIdle(globaTimeInMS);
         }catch (Exception e) {
             Logger.error(String.format("Unable wait %d for AUT to idle", globaTimeInMS));
         }
